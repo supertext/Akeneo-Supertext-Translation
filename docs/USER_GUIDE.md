@@ -117,3 +117,7 @@ Texts go to Supertext as one HTML document per language, and the translated valu
 | Timed out waiting for the Supertext translation. | Translate fewer languages at once, or ask an administrator to raise the timeout. |
 | Your Supertext translation limit is exceeded. | The Supertext subscription needs an upgrade. |
 | You are not allowed to edit this product. | You need the permission to edit the product's attributes. |
+
+## Support
+
+Questions, problems or ideas: use the [Supertext support form](https://integrations.supertext.com/en/support?platform=akeneo-pim). Mention the version of Akeneo PIM and of the plugin, what you did and what you expected; an error message helps a lot. You get an answer by email, in your language.
