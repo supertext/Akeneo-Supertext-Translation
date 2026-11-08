@@ -2,6 +2,8 @@
 
 Translate Akeneo PIM products and product models into your other locales with **Supertext AI**, right on the product page.
 
+![Demo: an English product in Akeneo PIM is translated with Supertext into German and French, then checked in German](docs/images/demo.gif)
+
 Open a product, choose **… → Translate with Supertext**, tick the locales and click **Translate**: the product's text values go to Supertext in one request per language and come back as that locale's values, saved through Akeneo's own validation, history and search index. Editors review and adjust the translation in Akeneo as usual.
 
 - Translates localizable text and text area attributes, rich text included (headings, bold text, links and lists are kept; whole sentences are translated)

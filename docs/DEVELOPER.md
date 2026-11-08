@@ -226,6 +226,22 @@ BASE_URL=http://127.0.0.1:8090 DEMO_ADMIN_EMAIL=… DEMO_ADMIN_PASSWORD=… DEMO
 
 The script saves a placeholder API key as the administrator first, and shows the live API address instead of the stand-in's on the settings page. The stand-in also answers version reports (`POST /report`, 202), so screenshots never report to the live Commando Center.
 
+## Demo movie
+
+`docs/images/demo.gif` (at the top of the README) and two MP4 movies are recorded from a fresh demo against the stand-in, with the shared kit in `tests/docs/movie/` (Playwright screencast + ffmpeg; Supertext intro and outro cards, captions, a visible cursor; waiting time is cut). Set up the demo and the stand-in as for the screenshots (no `SUPERTEXT_API_KEY`), then record the install movie first: it saves the made-up key `st-demo-0000-0000-0000`, which the demo movie uses.
+
+```bash
+cd tests/docs && pip install piper-tts   # the voice; ffmpeg must be installed too
+BASE_URL=http://127.0.0.1:8090 DEMO_ADMIN_EMAIL=… DEMO_ADMIN_PASSWORD=… PRODUCT_UUID=<uuid of praline-box-16> npm run movie:install
+BASE_URL=http://127.0.0.1:8090 DEMO_EDITOR_EMAIL=… DEMO_EDITOR_PASSWORD=… PRODUCT_UUID=<uuid of praline-box-16> npm run movie
+```
+
+- **Demo movie** (`movie.mjs`, about 45 s): the editor opens the sample product in English, chooses **… → Translate with Supertext**, keeps German and French, clicks **Translate** and checks the German version (locale switcher). Writes `docs/images/demo.gif` (800 px, 12 fps, silent; keep it under 3 MB) and `tests/docs/movie/out/Akeneo-Supertext-Translation.mp4`.
+- **Install and configuration movie** (`movie-install.mjs`, about 90 s, MP4 only): the commands from `docs/INSTALLATION.md` in a terminal (Composer, `bundles.php` and routes, cache, assets and front-end build), the channel's locales, **System → Supertext** with the API key, the automatic key check, the German locale's *Supertext language*, *Translation review* and where editors find *Translate with Supertext*. Writes `tests/docs/movie/out/Akeneo-Supertext-Translation-install.mp4`. The settings page shows the live API address instead of the stand-in's.
+- The MP4s are not committed (`tests/docs/movie/out/` is git-ignored; `MOVIE_OUT` writes elsewhere). Re-record when the screens they show change.
+- **Voice:** Piper (`pip install piper-tts`), voice "alba", downloaded once (63 MB, checked by SHA-256) into `tests/docs/movie/voice-cache/` (git-ignored). `MOVIE_VOICE=0` makes silent movies. Voice: Piper voice “alba” (en_GB), trained on a dataset from the University of Edinburgh's Centre for Speech Technology Research, CC BY 4.0 (https://creativecommons.org/licenses/by/4.0/)
+- The fonts in `tests/docs/movie/assets/fonts/` are Inter (SIL Open Font License, `Inter-LICENSE.txt`).
+
 ## Code quality and security checks
 
 - **Checks** (`.github/workflows/checks.yml`): actionlint and zizmor lint the workflows on every push and pull request; dependency review fails a pull request that adds a package with a known vulnerability (moderate or worse). Third-party actions are pinned to commit SHAs (Dependabot keeps them current). Run the linters locally with `pip install actionlint-py zizmor`, then `actionlint` and `zizmor .github/workflows`.
