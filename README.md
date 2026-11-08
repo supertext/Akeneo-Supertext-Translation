@@ -46,7 +46,7 @@ Then enter the API key under **System → Supertext**.
 
 ## Demo
 
-`demo/` is an Akeneo PIM Community Edition 2026.4 with an English sample product and product model and German, French and Italian (Switzerland) locales, deployed to Railway from this repository: <https://akeneo-production.up.railway.app/>. See the [developer guide](docs/DEVELOPER.md#demo-railway).
+`demo/` is an Akeneo PIM Community Edition 2026.5 with an English sample product and product model and German, French and Italian (Switzerland) locales, deployed to Railway from this repository: <https://akeneo-production.up.railway.app/>. See the [developer guide](docs/DEVELOPER.md#demo-railway).
 
 ## Changelog and roadmap
 

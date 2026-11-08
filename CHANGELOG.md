@@ -11,6 +11,7 @@ All notable changes to Supertext Translation for Akeneo PIM.
 - Support: the Supertext support form is linked in the README, the user guide and GitHub's "New issue" page.
 
 ### Changed
+- Tested with Akeneo PIM Community Edition 2026.5; the demo and CI now install 2026.5 instead of 2026.4.
 - **Languages: defaults where they are obvious** (Supertext SDK 0.4.0). A locale nobody mapped now uses its default instead of failing: `es_ES` → `es`, `nl_NL` → `nl`, `zh_CN` → `zh-Hans`, `zh_TW` → `zh-Hant`, bare `de` → `de-DE`. System → Supertext → Languages preselects each locale's drop-down with its exact match or default, shows the names in your interface language, and stores the language you save for every locale. Only locales without a default (e.g. `en_IE`, `de_LI`) show *— Choose —* and can't be translated until a language is chosen. Saved languages are kept as they are.
 - The *Form of address* choice is shown only for languages that offer it; a *Formal*/*Informal* saved earlier for another language is no longer sent (it made the translation fail).
 - Only languages from Supertext's list can be saved (a code saved by an earlier version is kept).

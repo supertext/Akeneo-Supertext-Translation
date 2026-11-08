@@ -4,7 +4,7 @@ For administrators: install the bundle, enter the Supertext API key, set up the 
 
 ## Requirements
 
-- Akeneo PIM **Community Edition 2026.4** (tested; 2026.3 should work too), installed from the Community Standard Edition (`akeneo/pim-community-standard`), with its PHP 8.3, MySQL 8.4 and Elasticsearch 8 requirements.
+- Akeneo PIM **Community Edition 2026.5** (tested; 2026.4 was tested before, 2026.3 should work too), installed from the Community Standard Edition (`akeneo/pim-community-standard`), with its PHP 8.3, MySQL 8.4 and Elasticsearch 8 requirements.
 - Node.js 18 and Yarn, which Akeneo needs anyway to build its front end: the bundle adds screens, so the front end is rebuilt once after installing.
 - A Supertext account and an API key. No Supertext account yet? Create one at [supertext.com](https://www.supertext.com/person/en/account/signin). Generate your API key at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (requires the Admin role).
 - Outgoing HTTPS from the Akeneo server to `api.supertext.com` (and, for the optional version information, to Supertext's Commando Center; for [Translation review](#translation-review), to Supertext's review service), and PHP's curl extension (part of Akeneo's requirements).

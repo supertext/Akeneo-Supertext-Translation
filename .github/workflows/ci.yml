@@ -87,7 +87,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: 22
-      - name: Build the demo image (Akeneo PIM 2026.4 with the bundle)
+      - name: Build the demo image (Akeneo PIM 2026.5 with the bundle)
         run: docker build -f demo/Dockerfile -t supertext-akeneo-demo .
       - name: Start the stand-in API
         run: node tests/docs/stand-in.mjs > stand-in.log 2>&1 &

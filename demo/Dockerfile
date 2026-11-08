@@ -1,6 +1,6 @@
 # Supertext Translation for Akeneo PIM: public demo (Railway). Build context = repository root:
 #   docker build -f demo/Dockerfile -t supertext-akeneo-demo .
-# One container runs Apache with Akeneo PIM Community Edition 2026.4 and the job queue worker.
+# One container runs Apache with Akeneo PIM Community Edition 2026.5 and the job queue worker.
 # MySQL 8.4 and Elasticsearch 8 are separate services (see demo/.env.example).
 #
 # Stages are ordered so that a change to the bundle only repeats the last front-end build, not
@@ -8,7 +8,7 @@
 
 # --- PHP 8.3 with Akeneo's extensions ------------------------------------------------------
 FROM mirror.gcr.io/library/php:8.3-apache AS php
-ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/download/2.12.3/install-php-extensions /usr/local/bin/
+ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/download/2.13.2/install-php-extensions /usr/local/bin/
 RUN install-php-extensions apcu bcmath exif gd imagick intl opcache pdo_mysql zip \
  && apt-get update && apt-get install -y --no-install-recommends unzip \
  && rm -rf /var/lib/apt/lists/* \
