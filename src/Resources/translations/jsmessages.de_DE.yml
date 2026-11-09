@@ -45,10 +45,18 @@ supertext_translation:
         invalid_url: Die API-Adresse muss mit https:// beginnen.
         missing_url: Geben Sie für eine eigene Umgebung die API-Adresse ein.
         invalid_timeout: Das Zeitlimit muss zwischen 30 und 1800 Sekunden liegen.
-        invalid_code: '«{{ code }}» ist keine gültige Supertext-Sprache für {{ locale }} (Beispiele: de-CH, es).'
+        invalid_code: '«{{ code }}» ist keine Supertext-Sprache ({{ locale }}). Wählen Sie eine aus der Liste.'
         invalid_language_pair: 'Supertext unterstützt dieses Sprachpaar nicht ({{ source }} → {{ target }}). Prüfen Sie die Sprachzuordnung unter System → Supertext.'
-        unsupported_language: 'Die Sprache {{ language }} ist noch keiner Supertext-Sprache zugeordnet. Bitten Sie Ihre Administratorin oder Ihren Administrator, sie unter System → Supertext (Sprachen) zuzuordnen.'
+        unsupported_language: 'Die Sprache {{ language }} hat keine Supertext-Sprache. Bitten Sie Ihre Administratorin oder Ihren Administrator, unter System → Supertext (Sprachen) in der Auswahl «Supertext-Sprache» eine zu wählen.'
         unsupported_feature: 'Supertext bietet für diese Sprache keine formelle oder informelle Anrede an. Stellen Sie die Anrede unter System → Supertext (Sprachen) auf Standard.'
+        file_invalid: 'Diese Datei ist keine gültige XLIFF- oder HTML-Übersetzungsdatei.'
+        file_missing_metadata: 'Diese Datei wurde nicht vom Supertext-Bundle exportiert, oder ihr Kopfbereich wurde entfernt.'
+        file_too_large: 'Die Datei ist zu gross (höchstens 10 MB).'
+        file_nothing: 'Nichts zu übersetzen.'
+        file_other_system: 'Diese Datei gehört zu einem anderen System ({{ plugin }}).'
+        file_not_found: 'Das Produkt, aus dem diese Datei exportiert wurde, existiert nicht mehr.'
+        file_no_language: 'Das PIM hat kein aktiviertes Gebietsschema {{ language }}.'
+        file_html_one: 'Eine HTML-Datei enthält genau eine Zielsprache.'
     keycheck:
         ok: 'API-Schlüssel geprüft: Die Verbindung zu Supertext funktioniert.'
         invalid: 'Supertext hat den API-Schlüssel abgelehnt. Prüfen Sie, ob Sie den ganzen Schlüssel kopiert haben, oder erstellen Sie einen neuen unter supertext.com → Integrations → API (erfordert die Rolle Admin). Noch kein Supertext-Konto? Erstellen Sie eines auf supertext.com.'
@@ -65,7 +73,7 @@ supertext_translation:
         not_in_channel: Von den Kanälen dieser Werte nicht verwendet
         existing: Hat eigenen Text ({{ count }} Werte)
         to_translate: "{{ count }} Werte zu übersetzen"
-        unmapped: 'Keine Supertext-Sprache: Eine Administratorin oder ein Administrator kann dieses Gebietsschema unter System → Supertext zuordnen.'
+        unmapped: 'Keine Supertext-Sprache: Eine Administratorin oder ein Administrator kann unter System → Supertext (Sprachen) eine für dieses Gebietsschema wählen.'
         overwrite: Bestehende Übersetzungen überschreiben
         overwrite_warning: "Der bestehende Text wird ersetzt in: {{ languages }}. Im Verlauf bleibt der bisherige Text sichtbar."
         translate: Übersetzen
@@ -97,17 +105,38 @@ supertext_translation:
         version_reports_help: 'Sendet die URL der Website sowie die Versionen dieses Plugins, des PIM und der Laufzeitumgebung an Supertext, wenn Sie diese Einstellungen speichern und nach einem Update. So sieht der Supertext-Support, welche Version Sie einsetzen. Es werden keine Inhalte, kein API-Schlüssel und keine Personendaten übertragen.'
         version_reports_environment: 'Auf diesem Server ist die Umgebungsvariable SUPERTEXT_VERSION_REPORTS gesetzt, sie hat Vorrang.'
         languages: Sprachen
-        languages_help: 'Wählen Sie für jedes Gebietsschema die Supertext-Sprache. Gebietsschemas, die einer Supertext-Sprache entsprechen, sind vorausgefüllt (de_CH → de-CH); die anderen brauchen eine (es_ES → es, nl_NL → nl), sonst können sie nicht übersetzt werden.'
+        languages_help: 'Wählen Sie für jedes Gebietsschema die Supertext-Sprache (sie gilt auch, wenn das Gebietsschema die Ausgangssprache ist). Vorausgewählt ist die passende Supertext-Sprache (de_CH → de-CH) oder ihr Standard (de_DE → de-DE, es_ES → es, zh_TW → zh-Hant). Gebietsschemas ohne (en_IE, de_LI) zeigen «— Wählen —» und können erst übersetzt werden, wenn Sie eine Sprache wählen.'
         locale: Gebietsschema
         code: 'Supertext-Sprache'
         politeness: Anrede
         politeness_default: Standard
         politeness_more: Formell (Sie)
         politeness_less: Informell (du)
-        choose_code: 'Supertext-Sprache wählen'
-        not_mapped: 'Nicht zugeordnet: Wählen Sie eine Supertext-Sprache'
+        choose_code: '— Wählen —'
+        not_mapped: 'Kein Standard für dieses Gebietsschema: Wählen Sie eine Supertext-Sprache'
         no_politeness: 'Supertext bietet für diese Sprache keine formelle/informelle Anrede an'
+        review: Übersetzungsprüfung
+        review_label: 'Übersetzungsprüfung für {{ language }}'
+        review_help: 'Übersetzungsprüfung: Übersetzungen in ein Gebietsschema mit diesem Häkchen laufen über den Prüfdienst von Supertext, damit Prüferinnen und Prüfer sie mit der Erweiterung Supertext Localization Review direkt auf der Website kontrollieren und korrigieren können. Ihre Korrekturen werden beim nächsten Übersetzen des Produkts übernommen.'
+        review_off: 'Die Umgebungsvariable SUPERTEXT_REVIEW_URL ist auf diesem Server leer: Die Übersetzungsprüfung ist für alle Gebietsschemas ausgeschaltet.'
         test: Verbindung testen
         saved: Einstellungen gespeichert.
         version: "Supertext Translation für Akeneo PIM, Version"
         version_unknown: unbekannt
+    files:
+        export_action: 'Für Übersetzung exportieren'
+        import_action: 'Übersetzung importieren'
+        format: 'Dateiformat'
+        xliff: 'XLIFF 1.2 (für Übersetzungstools)'
+        html: 'HTML (eine Sprache pro Datei)'
+        download: 'Datei herunterladen'
+        file: 'Übersetzte Datei (XLIFF oder HTML)'
+        include_changed: 'Auch Texte importieren, deren Ausgangstext sich seit dem Export geändert hat'
+        nothing: 'Nichts zu übersetzen.'
+        summary:
+            ok: 'Importiert: {{ count }}'
+            existing: 'Beibehalten, hat bereits einen eigenen Text: {{ count }}'
+            changed: 'Übersprungen, Ausgangstext seit dem Export geändert: {{ count }}'
+            untranslated: 'In der Datei nicht übersetzt: {{ count }}'
+            invalid: 'Formatierung verändert, nicht importiert: {{ count }}'
+            missing: 'Nicht in der Datei: {{ count }}'

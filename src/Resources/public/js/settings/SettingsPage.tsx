@@ -92,7 +92,7 @@ const SettingsPage = () => {
     api_url: apiUrl,
     timeout: Number(timeout),
     version_reports: versionReports,
-    languages: Object.fromEntries(languages.map(language => [language.locale, {code: language.code, politeness: language.politeness}])),
+    languages: Object.fromEntries(languages.map(language => [language.locale, {code: language.code, politeness: language.politeness, review: language.review}])),
   });
 
   const save = () => {
@@ -236,6 +236,7 @@ const SettingsPage = () => {
                   <Table.HeaderCell>{__('supertext_translation.settings.locale')}</Table.HeaderCell>
                   <Table.HeaderCell>{__('supertext_translation.settings.code')}</Table.HeaderCell>
                   <Table.HeaderCell>{__('supertext_translation.settings.politeness')}</Table.HeaderCell>
+                  <Table.HeaderCell>{__('supertext_translation.settings.review')}</Table.HeaderCell>
                 </Table.Header>
                 <Table.Body>
                   {languages.map(language => (
@@ -246,7 +247,12 @@ const SettingsPage = () => {
                       <Table.Cell>
                         <SelectInput
                           value={language.code !== '' ? language.code : null}
-                          onChange={(value: string | null) => updateLanguage(language.locale, {code: value ?? ''})}
+                          onChange={(value: string | null) =>
+                            updateLanguage(language.locale, {
+                              code: value ?? '',
+                              politeness: supportsPoliteness(value ?? '') ? language.politeness : '',
+                            })
+                          }
                           clearable={false}
                           placeholder={__('supertext_translation.settings.choose_code')}
                           emptyResultLabel={__('pim_common.no_result')}
@@ -271,30 +277,44 @@ const SettingsPage = () => {
                         )}
                       </Table.Cell>
                       <Table.Cell>
-                        <SelectInput
-                          value={language.politeness}
-                          onChange={(value: string) => updateLanguage(language.locale, {politeness: value as LanguageSetting['politeness']})}
-                          readOnly={language.politeness === '' && !supportsPoliteness(language.code)}
-                          clearable={false}
-                          emptyResultLabel={__('pim_common.no_result')}
-                          openLabel={__('pim_common.open')}
-                        >
-                          {politeness.map(value => (
-                            <SelectInput.Option key={value || 'default'} value={value}>
-                              {__(`supertext_translation.settings.politeness_${value || 'default'}`)}
-                            </SelectInput.Option>
-                          ))}
-                        </SelectInput>
-                        {language.code !== '' && !supportsPoliteness(language.code) && (
-                          <Helper inline level={language.politeness !== '' ? 'warning' : 'info'}>
+                        {language.code === '' || supportsPoliteness(language.code) ? (
+                          <SelectInput
+                            value={language.politeness}
+                            onChange={(value: string) => updateLanguage(language.locale, {politeness: value as LanguageSetting['politeness']})}
+                            readOnly={language.code === ''}
+                            clearable={false}
+                            emptyResultLabel={__('pim_common.no_result')}
+                            openLabel={__('pim_common.open')}
+                          >
+                            {politeness.map(value => (
+                              <SelectInput.Option key={value || 'default'} value={value}>
+                                {__(`supertext_translation.settings.politeness_${value || 'default'}`)}
+                              </SelectInput.Option>
+                            ))}
+                          </SelectInput>
+                        ) : (
+                          <Helper inline level="info">
                             {__('supertext_translation.settings.no_politeness')}
                           </Helper>
                         )}
+                      </Table.Cell>
+                      <Table.Cell>
+                        <Checkbox
+                          className="supertext-review"
+                          checked={language.review}
+                          readOnly={settings.review_url === ''}
+                          onChange={(value: boolean) => updateLanguage(language.locale, {review: value})}
+                          title={__('supertext_translation.settings.review_label', {language: language.label})}
+                        />
                       </Table.Cell>
                     </Table.Row>
                   ))}
                 </Table.Body>
               </Table>
+              <Note className="supertext-review-help">
+                {__('supertext_translation.settings.review_help')}
+                {settings.review_url === '' && ` ${__('supertext_translation.settings.review_off')}`}
+              </Note>
               <Note className="supertext-version">
                 {__('supertext_translation.settings.version')}{' '}
                 {settings.release_url !== '' ? (

@@ -12,6 +12,7 @@ namespace Supertext\AkeneoTranslationBundle\Settings;
 
 use Supertext\AkeneoTranslationBundle\Api\SupertextClient;
 use Supertext\AkeneoTranslationBundle\Api\SupertextException;
+use Supertext\AkeneoTranslationBundle\Reporting\Reporting;
 use Supertext\PluginHealth\InstallationReporter;
 use Supertext\Sdk\V1\Languages;
 use Supertext\Sdk\V1\SupertextException as SdkException;
@@ -19,11 +20,13 @@ use Supertext\Sdk\V1\SupertextException as SdkException;
 /**
  * The bundle's settings: what an administrator saved under System → Supertext, with the
  * environment variables SUPERTEXT_API_KEY, SUPERTEXT_API_URL and SUPERTEXT_VERSION_REPORTS
- * taking precedence.
+ * taking precedence. SUPERTEXT_REVIEW_URL sets the review service for locales with "Translation review"
+ * on (languages.<locale>.review; default SupertextClient::REVIEW_URL, set but empty = review off).
  *
- * Languages follow the Supertext SDK's rules (no guessing): the locale's mapping (languages.<locale>.code)
- * wins, else a locale that equals a Supertext code apart from case and "_"/"-" (de_CH → de-CH),
- * else unsupported_language and nothing is sent. One mapping serves both directions.
+ * Languages follow the Supertext SDK's rules: the locale's mapping (languages.<locale>.code, a drop-down
+ * per locale on the settings page) wins, else a locale that equals a Supertext code apart from case and
+ * "_"/"-" (de_CH → de-CH), else the SDK's default (es_ES → es, zh_TW → zh-Hant), else unsupported_language
+ * and nothing is sent. One mapping serves both directions.
  */
 final class Settings
 {
@@ -108,6 +111,23 @@ final class Settings
         return self::environmentValue('SUPERTEXT_API_URL') !== '';
     }
 
+    /**
+     * The review service for locales with "Translation review" on: SUPERTEXT_REVIEW_URL when it is set
+     * (also when empty: review off for every locale), else Supertext's review service.
+     */
+    public function reviewUrl(): string
+    {
+        $value = $_SERVER['SUPERTEXT_REVIEW_URL'] ?? $_ENV['SUPERTEXT_REVIEW_URL'] ?? getenv('SUPERTEXT_REVIEW_URL');
+
+        return \is_string($value) ? trim($value) : SupertextClient::REVIEW_URL;
+    }
+
+    /** Whether translations into $locale go through the review service ("Translation review", off by default). */
+    public function review(string $locale): bool
+    {
+        return ($this->languages()[$locale]['review'] ?? false) === true;
+    }
+
     public function timeout(): int
     {
         $value = (int) ($this->stored()['timeout'] ?? self::DEFAULT_TIMEOUT);
@@ -143,7 +163,7 @@ final class Settings
         }
     }
 
-    /** The target code for a locale, or null when it has neither a mapping nor an exact match (settings page). */
+    /** The target code for a locale, or null when it has no mapping, no exact match and no default. */
     public function languageCodeOrNull(string $locale): ?string
     {
         try {
@@ -157,6 +177,62 @@ final class Settings
     public static function exactLanguageCode(string $locale): ?string
     {
         return Languages::matchTarget($locale);
+    }
+
+    /**
+     * What the settings page preselects for a locale nobody mapped: the exact match, else the SDK's
+     * default (es_ES → es, en_IE → null).
+     */
+    public static function suggestedLanguageCode(string $locale): ?string
+    {
+        return Languages::suggestTarget($locale);
+    }
+
+    /**
+     * Supertext's target languages for the drop-downs: code, name in the user's interface language
+     * (PHP intl, else English), politeness; sorted by that name.
+     *
+     * @return list<array{code: string, name: string, politeness: bool}>
+     */
+    public static function targetOptions(string $uiLocale = 'en_US'): array
+    {
+        $options = [];
+
+        foreach (Languages::targetOptions() as $target) {
+            $options[] = ['code' => $target['code'], 'name' => self::targetName($target['code'], $target['name'], $uiLocale), 'politeness' => $target['politeness']];
+        }
+
+        if (class_exists(\Collator::class)) {
+            $collator = new \Collator($uiLocale);
+            usort($options, static fn (array $a, array $b): int => (int) $collator->compare($a['name'], $b['name']));
+        }
+
+        return $options;
+    }
+
+    /** The target's name in $uiLocale (de: "Deutsch (Schweiz)"), else $english. */
+    public static function targetName(string $code, string $english, string $uiLocale): string
+    {
+        if (!class_exists(\Locale::class)) {
+            return $english;
+        }
+
+        $language = substr($uiLocale, 0, 2);
+
+        // ICU names the Swiss German subdivisions "(sd=chzh)": name the city instead.
+        if (preg_match('/^gsw-u-sd-(chzh|chbe)$/', $code, $match)) {
+            $cities = [
+                'chzh' => ['de' => 'Zürich', 'fr' => 'Zurich', 'it' => 'Zurigo', 'en' => 'Zurich'],
+                'chbe' => ['de' => 'Bern', 'fr' => 'Berne', 'it' => 'Berna', 'en' => 'Bern'],
+            ][$match[1]];
+            $name = (string) \Locale::getDisplayLanguage('gsw', $uiLocale);
+
+            return $name !== '' && $name !== 'gsw' ? $name . ' (' . ($cities[$language] ?? $cities['en']) . ')' : $english;
+        }
+
+        $name = (string) \Locale::getDisplayName($code, $uiLocale);
+
+        return $name !== '' && strcasecmp($name, $code) !== 0 && !str_contains($name, '=') ? $name : $english;
     }
 
     /** @return array<string, string> Akeneo locale → Supertext code, as saved */
@@ -175,15 +251,20 @@ final class Settings
         return $mapping;
     }
 
-    /** "more" (formal), "less" (informal) or "" (Supertext's default). */
+    /** "more" (formal), "less" (informal) or "" (Supertext's default; always "" where the target offers no choice). */
     public function politeness(string $locale): string
     {
         $value = (string) ($this->languages()[$locale]['politeness'] ?? '');
+        $code  = $this->languageCodeOrNull($locale);
+
+        if ($code !== null && Languages::supportsPoliteness($code) === false) {
+            return '';
+        }
 
         return \in_array($value, ['more', 'less'], true) ? $value : '';
     }
 
-    /** @return array<string, array{code?: string, politeness?: string}> */
+    /** @return array<string, array{code?: string, politeness?: string, review?: bool}> */
     public function languages(): array
     {
         $languages = $this->stored()['languages'] ?? [];
@@ -240,7 +321,15 @@ final class Settings
 
     public function client(): SupertextClient
     {
-        return new SupertextClient($this->apiKey(), $this->baseUrl(), $this->timeout(), 'Akeneo-Supertext/' . (self::version() !== '' ? self::version() : 'dev'));
+        // The User-Agent names the bundle and its version (as in the reports), so Supertext and the review
+        // service see which release calls. forReview() gives the client for locales with Translation review.
+        return new SupertextClient(
+            $this->apiKey(),
+            $this->baseUrl(),
+            $this->timeout(),
+            Reporting::PLUGIN_NAME . '/' . (self::version() !== '' ? self::version() : 'dev'),
+            reviewUrl: $this->reviewUrl(),
+        );
     }
 
     /**
@@ -308,25 +397,34 @@ final class Settings
 
                 $code       = trim((string) ($language['code'] ?? ''));
                 $politeness = (string) ($language['politeness'] ?? '');
+                $previous   = (string) ($this->languages()[$locale]['code'] ?? '');
 
-                // A code from Supertext's list (in its spelling), or one shaped like a language tag
-                // (sent as it is, for a language Supertext adds before the SDK lists it).
-                if ($code !== '' && !preg_match('/^[A-Za-z]{2,3}(?:[-_][A-Za-z0-9]{1,8})*$/', $code)) {
-                    $errors[] = ['key' => 'invalid_code', 'params' => ['code' => $code, 'locale' => $locale], 'message' => sprintf('"%s" is not a valid Supertext language for %s (examples: de-CH, es).', $code, $locale)];
+                // One of Supertext's codes (stored in its spelling). A code saved by an earlier version that
+                // isn't in the list is kept as it is, so nothing configured is lost.
+                $known = $code !== '' ? Languages::matchTarget($code) : null;
+
+                if ($code !== '' && $known === null && $code !== $previous) {
+                    $errors[] = ['key' => 'invalid_code', 'params' => ['code' => $code, 'locale' => $locale], 'message' => sprintf('"%s" is not one of Supertext\'s languages (%s).', $code, $locale)];
 
                     continue;
                 }
 
                 $entry = [];
-                $code  = $code !== '' ? (Languages::matchTarget($code) ?? $code) : '';
 
-                // The exact match applies anyway: only other choices are stored.
-                if ($code !== '' && $code !== self::exactLanguageCode($locale)) {
-                    $entry['code'] = $code;
+                // The chosen code is stored as chosen, also when it is the preselected suggestion.
+                if ($code !== '') {
+                    $entry['code'] = $known ?? $code;
                 }
 
-                if (\in_array($politeness, ['more', 'less'], true)) {
+                // Formal/informal only where the target offers it (Supertext rejects it elsewhere).
+                $target = $code !== '' ? ($known ?? $code) : self::suggestedLanguageCode($locale);
+                if (\in_array($politeness, ['more', 'less'], true) && ($target === null || Languages::supportsPoliteness($target) !== false)) {
                     $entry['politeness'] = $politeness;
+                }
+
+                // Translation review: on or off per target locale (off when not sent).
+                if (($language['review'] ?? false) === true) {
+                    $entry['review'] = true;
                 }
 
                 if ($entry !== []) {

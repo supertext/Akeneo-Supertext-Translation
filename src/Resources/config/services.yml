@@ -38,6 +38,26 @@ services:
             - '@logger'
             - '@Supertext\AkeneoTranslationBundle\Reporting\Reporting'
 
+    Supertext\AkeneoTranslationBundle\Translation\AkeneoTranslationFileStore:
+        arguments:
+            - '@pim_catalog.repository.product'
+            - '@pim_catalog.repository.product_model'
+            - '@Supertext\AkeneoTranslationBundle\Translation\EntityTranslator'
+            - '@oro_security.security_facade'
+
+    Supertext\AkeneoTranslationBundle\Translation\TranslationFileGlue:
+        arguments:
+            - '@Supertext\AkeneoTranslationBundle\Translation\AkeneoTranslationFileStore'
+            - '@Supertext\AkeneoTranslationBundle\Settings\Settings'
+
+    # Export for translation / import translation (XLIFF 1.2, HTML)
+    supertext_translation.controller.translation_file:
+        class: Supertext\AkeneoTranslationBundle\Controller\TranslationFileController
+        public: true
+        arguments:
+            - '@Supertext\AkeneoTranslationBundle\Translation\TranslationFileGlue'
+            - '@logger'
+
     supertext_translation.controller.settings:
         class: Supertext\AkeneoTranslationBundle\Controller\SettingsController
         public: true

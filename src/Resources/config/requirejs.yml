@@ -10,3 +10,4 @@ config:
         # Relative to public/bundles/ (bin/console pim:installer:assets copies Resources/public there).
         supertext-translation/settings-controller: supertexttranslation/js/settings/settings-controller.tsx
         supertext-translation/translate-action: supertexttranslation/js/product/translate-action.tsx
+        supertext-translation/files-action: supertexttranslation/js/product/files-action.tsx

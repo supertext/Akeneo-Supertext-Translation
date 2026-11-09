@@ -174,82 +174,17 @@ final class EntityTranslator
             }
 
             try {
-                $translations = $this->translateUnits($client, $plan['translate'], $source, $target);
+                // Locales with "Translation review" on go through the review service (same key and protocol).
+                $translations = $this->translateUnits($client->forReview($this->settings->review($target)), $plan['translate'], $source, $target);
             } catch (SupertextException $e) {
                 $results[$target] = ['status' => 'error', 'translated' => 0, 'existing' => $plan['existing'], 'key' => $e->key, 'params' => $e->params, 'detail' => $e->detail, 'message' => $e->getMessage()];
 
                 continue;
             }
 
-            $previous = [];
-            $values   = [];
-            $tooLong  = [];
-
-            foreach ($plan['translate'] as $index => $unit) {
-                $text = $translations[$index] ?? '';
-
-                if (!Planner::hasText($text)) {
-                    continue;
-                }
-
-                if ($unit->maxCharacters !== null && !$unit->html && mb_strlen($text) > $unit->maxCharacters) {
-                    $tooLong[] = $unit->attribute;
-
-                    continue;
-                }
-
-                $current                                       = $this->ownValues($entity)->getByCodes($unit->attribute, $unit->scope, $target);
-                $previous[$unit->attribute][]                  = ['locale' => $target, 'scope' => $unit->scope, 'data' => $current?->getData()];
-                $values[$unit->attribute][]                    = ['locale' => $target, 'scope' => $unit->scope, 'data' => $text];
-            }
-
-            if ($values === []) {
-                $results[$target] = [
-                    'status'     => 'error',
-                    'translated' => 0,
-                    'existing'   => $plan['existing'],
-                    'message'    => $tooLong !== [] ? sprintf('The translation is longer than the attribute allows: %s.', implode(', ', $tooLong)) : 'Supertext returned no text.',
-                    'key'        => $tooLong !== [] ? 'too_long' : 'no_text',
-                    'params'     => $tooLong !== [] ? ['attributes' => implode(', ', $tooLong)] : [],
-                    'detail'     => '',
-                ];
-
-                continue;
-            }
-
-            try {
-                $updater->update($entity, ['values' => $values]);
-                $violations = array_diff_key($this->violationKeys($entity), $baseline);
-            } catch (\Throwable $e) {
-                $this->logger->warning('Supertext: could not apply the translation', ['locale' => $target, 'exception' => $e]);
-                $violations = ['update' => $e->getMessage()];
-            }
-
-            if ($violations !== []) {
-                // Put the previous values back so the other languages can still be saved.
-                try {
-                    $updater->update($entity, ['values' => $previous]);
-                } catch (\Throwable) {
-                }
-
-                $detail           = implode(' ', array_unique(array_values($violations)));
-                $results[$target] = ['status' => 'error', 'translated' => 0, 'existing' => $plan['existing'], 'message' => 'Akeneo did not accept the translation: ' . $detail, 'key' => 'rejected', 'params' => [], 'detail' => $detail];
-
-                continue;
-            }
-
-            $changed  = true;
-            $count    = array_sum(array_map('count', $values));
-            $message  = $tooLong !== [] ? sprintf('Not translated because the translation is too long: %s.', implode(', ', $tooLong)) : '';
-            $results[$target] = [
-                'status'     => 'translated',
-                'translated' => $count,
-                'existing'   => $plan['existing'],
-                'message'    => $message,
-                'key'        => $tooLong !== [] ? 'partly_too_long' : '',
-                'params'     => $tooLong !== [] ? ['attributes' => implode(', ', $tooLong)] : [],
-                'detail'     => '',
-            ];
+            $applied          = $this->applyTexts($entity, $updater, $target, $plan['translate'], $translations, $plan['existing'], $baseline);
+            $changed          = $changed || $applied['status'] === 'translated';
+            $results[$target] = $applied;
         }
 
         if ($changed) {
@@ -257,6 +192,139 @@ final class EntityTranslator
         }
 
         return $results;
+    }
+
+    /**
+     * The values a translation file for $target holds: the units the API translation would send
+     * with "overwrite" (every value of the source locale the target locale can have), keyed like
+     * TextUnit::key().
+     *
+     * @return list<TextUnit>
+     */
+    public function fileUnits(EntityWithValuesInterface $entity, string $source, string $target): array
+    {
+        return Planner::plan($this->sourceUnits($entity, $source), $target, $this->channelLocales(), static fn (): bool => false, true)['translate'];
+    }
+
+    /**
+     * Writes texts imported from a translation file into $target, with the same rules as API
+     * translations: values that already have text are kept unless $overwrite, Akeneo's updater,
+     * validator and saver.
+     *
+     * @param array<string, string> $texts TextUnit::key() => translated text
+     *
+     * @return array{status: string, translated: int, existing: int, message: string, key: string, params: array<string, string|int>, detail: string}
+     *         existing: imported texts not written because the value already has text
+     */
+    public function importTexts(EntityWithValuesInterface $entity, string $source, string $target, array $texts, bool $overwrite): array
+    {
+        $plan         = Planner::plan($this->sourceUnits($entity, $source), $target, $this->channelLocales(), $this->hasTextCallback($entity), $overwrite);
+        $units        = [];
+        $translations = [];
+
+        foreach ($plan['translate'] as $unit) {
+            if (isset($texts[$unit->key()])) {
+                $translations[\count($units)] = $texts[$unit->key()];
+                $units[]                      = $unit;
+            }
+        }
+
+        $existing = \count(array_diff_key($texts, array_flip(array_map(static fn (TextUnit $unit): string => $unit->key(), $units))));
+
+        if ($units === []) {
+            return ['status' => 'nothing', 'translated' => 0, 'existing' => $existing, 'message' => '', 'key' => '', 'params' => [], 'detail' => ''];
+        }
+
+        $updater = $entity instanceof ProductModelInterface ? $this->productModelUpdater : $this->productUpdater;
+        $result  = $this->applyTexts($entity, $updater, $target, $units, $translations, $existing, $this->violationKeys($entity));
+
+        if ($result['status'] === 'translated') {
+            ($entity instanceof ProductModelInterface ? $this->productModelSaver : $this->productSaver)->save($entity);
+        }
+
+        return $result;
+    }
+
+    /**
+     * Applies translated texts for one target locale (the write-back shared by API translations
+     * and translation file imports): skips empty texts and plain texts longer than the attribute
+     * allows, updates the entity with Akeneo's updater and puts the previous values back when the
+     * validator rejects them. Doesn't save.
+     *
+     * @param list<TextUnit>       $units
+     * @param array<int, string>   $translations unit index => text
+     * @param array<string,string> $baseline     violations before the change
+     *
+     * @return array{status: string, translated: int, existing: int, message: string, key: string, params: array<string, string|int>, detail: string}
+     */
+    private function applyTexts(EntityWithValuesInterface $entity, ObjectUpdaterInterface $updater, string $target, array $units, array $translations, int $existing, array $baseline): array
+    {
+        $previous = [];
+        $values   = [];
+        $tooLong  = [];
+
+        foreach ($units as $index => $unit) {
+            $text = $translations[$index] ?? '';
+
+            if (!Planner::hasText($text)) {
+                continue;
+            }
+
+            if ($unit->maxCharacters !== null && !$unit->html && mb_strlen($text) > $unit->maxCharacters) {
+                $tooLong[] = $unit->attribute;
+
+                continue;
+            }
+
+            $current                      = $this->ownValues($entity)->getByCodes($unit->attribute, $unit->scope, $target);
+            $previous[$unit->attribute][] = ['locale' => $target, 'scope' => $unit->scope, 'data' => $current?->getData()];
+            $values[$unit->attribute][]   = ['locale' => $target, 'scope' => $unit->scope, 'data' => $text];
+        }
+
+        if ($values === []) {
+            return [
+                'status'     => 'error',
+                'translated' => 0,
+                'existing'   => $existing,
+                'message'    => $tooLong !== [] ? sprintf('The translation is longer than the attribute allows: %s.', implode(', ', $tooLong)) : 'Supertext returned no text.',
+                'key'        => $tooLong !== [] ? 'too_long' : 'no_text',
+                'params'     => $tooLong !== [] ? ['attributes' => implode(', ', $tooLong)] : [],
+                'detail'     => '',
+            ];
+        }
+
+        try {
+            $updater->update($entity, ['values' => $values]);
+            $violations = array_diff_key($this->violationKeys($entity), $baseline);
+        } catch (\Throwable $e) {
+            $this->logger->warning('Supertext: could not apply the translation', ['locale' => $target, 'exception' => $e]);
+            $violations = ['update' => $e->getMessage()];
+        }
+
+        if ($violations !== []) {
+            // Put the previous values back so the other languages can still be saved.
+            try {
+                $updater->update($entity, ['values' => $previous]);
+            } catch (\Throwable) {
+            }
+
+            $detail = implode(' ', array_unique(array_values($violations)));
+
+            return ['status' => 'error', 'translated' => 0, 'existing' => $existing, 'message' => 'Akeneo did not accept the translation: ' . $detail, 'key' => 'rejected', 'params' => [], 'detail' => $detail];
+        }
+
+        $count   = array_sum(array_map('count', $values));
+        $message = $tooLong !== [] ? sprintf('Not translated because the translation is too long: %s.', implode(', ', $tooLong)) : '';
+
+        return [
+            'status'     => 'translated',
+            'translated' => $count,
+            'existing'   => $existing,
+            'message'    => $message,
+            'key'        => $tooLong !== [] ? 'partly_too_long' : '',
+            'params'     => $tooLong !== [] ? ['attributes' => implode(', ', $tooLong)] : [],
+            'detail'     => '',
+        ];
     }
 
     /**

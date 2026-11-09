@@ -72,7 +72,7 @@ final class CheckCommand extends Command
         $output->writeln('Languages: ' . implode(', ', $languages));
 
         if (\in_array(true, array_map(fn (string $locale): bool => $this->settings->languageCodeOrNull($locale) === null, $this->translator->activatedLocales()), true)) {
-            $output->writeln('<comment>Map the locales without a Supertext language under System → Supertext (Languages).</comment>');
+            $output->writeln('<comment>Choose a Supertext language for the locales without one under System → Supertext (Languages).</comment>');
         }
 
         $output->writeln(match (true) {

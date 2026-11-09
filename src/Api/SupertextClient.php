@@ -23,6 +23,11 @@ use Supertext\Sdk\V1\SupertextException as SdkException;
  * them as they are. This class adds the bundle's environments and turns SDK errors into the bundle's
  * SupertextException with a UI message key.
  *
+ * Translation review: forReview() returns a second client with the same key and settings whose base
+ * URL is the review service (REVIEW_URL by default), for locales with "Translation review" on. The SDK's
+ * translateTexts() uploads, polls, downloads and deletes with one client, so a job is always collected
+ * by the client that submitted it.
+ *
  * Has no Akeneo dependencies (unit-tested with a fake transport).
  */
 final class SupertextClient
@@ -31,14 +36,27 @@ final class SupertextClient
     public const STAGING = 'https://api.staging.supertext.com/v1/';
     public const TESTING = 'https://api.testing.supertext.com/v1/';
 
+    /**
+     * Supertext's review service (translation proxy of Supertext Localization Review). It speaks the
+     * same API and forwards to the live Supertext API with the plugin's key, keeping every translation
+     * so reviewers can correct them on the website. Used for locales with "Translation review" on.
+     */
+    public const REVIEW_URL = 'https://localizationreview-production.up.railway.app/v1/';
+
     private readonly string $apiKey;
     private readonly Client $client;
 
+    /** @var (\Closure(): self)|null builds the client for the review service (null: none) */
+    private readonly ?\Closure $makeReviewClient;
+
+    private ?self $reviewClient = null;
+
     /**
      * @param int                          $timeout        seconds to wait for one translation
-     * @param string                       $userAgent      e.g. "Akeneo-Supertext/1.0.0"
+     * @param string                       $userAgent      e.g. "Akeneo-Supertext-Translation/1.0.0"
      * @param HttpTransport|null           $transport      the SDK's curl transport by default
      * @param (callable(float): void)|null $sleep          for tests
+     * @param string                       $reviewUrl      review service for locales with Translation review ('' = none)
      */
     public function __construct(
         #[\SensitiveParameter] string $apiKey,
@@ -48,11 +66,17 @@ final class SupertextClient
         ?HttpTransport $transport = null,
         float $pollInterval = 2.0,
         ?callable $sleep = null,
+        string $reviewUrl = '',
     ) {
+        $baseUrl      = $baseUrl !== '' ? $baseUrl : self::LIVE;
+        $reviewUrl    = trim($reviewUrl);
         $this->apiKey = self::normalizeKey($apiKey);
+        $this->makeReviewClient = $reviewUrl === '' || rtrim($reviewUrl, '/') === rtrim($baseUrl, '/')
+            ? null
+            : static fn (): self => new self($apiKey, $reviewUrl, $timeout, $userAgent, $transport, $pollInterval, $sleep);
         $this->client = new Client(
             $this->apiKey,
-            $baseUrl !== '' ? $baseUrl : self::LIVE,
+            $baseUrl,
             pollInterval: $pollInterval,
             timeout: (float) $timeout,
             requestTimeout: 60.0,
@@ -79,6 +103,19 @@ final class SupertextClient
             'testing' => self::TESTING,
             default   => self::LIVE,
         };
+    }
+
+    /**
+     * The client for a target locale: the review service when its "Translation review" is on (same key,
+     * same protocol), else this one. Without a review URL, always this one.
+     */
+    public function forReview(bool $review): self
+    {
+        if (!$review || $this->makeReviewClient === null) {
+            return $this;
+        }
+
+        return $this->reviewClient ??= ($this->makeReviewClient)();
     }
 
     public function hasApiKey(): bool

@@ -45,10 +45,18 @@ supertext_translation:
         invalid_url: The API address must start with https://.
         missing_url: Enter the API address for a custom environment.
         invalid_timeout: The timeout must be between 30 and 1800 seconds.
-        invalid_code: '"{{ code }}" is not a valid Supertext language for {{ locale }} (examples: de-CH, es).'
+        invalid_code: '"{{ code }}" is not one of Supertext''s languages ({{ locale }}). Choose one from the list.'
         invalid_language_pair: 'Supertext does not support this language pair ({{ source }} → {{ target }}). Check the language mapping under System → Supertext.'
-        unsupported_language: 'The language {{ language }} has no Supertext language yet. Ask your administrator to map it under System → Supertext (Languages).'
+        unsupported_language: 'The language {{ language }} has no Supertext language. Ask your administrator to choose one in the "Supertext language" drop-down under System → Supertext (Languages).'
         unsupported_feature: 'Supertext offers no formal or informal tone for this language. Set the form of address to Default under System → Supertext (Languages).'
+        file_invalid: 'This file isn''t a valid XLIFF or HTML translation file.'
+        file_missing_metadata: 'This file wasn''t exported by the Supertext bundle, or its header was removed.'
+        file_too_large: 'The file is too large (at most 10 MB).'
+        file_nothing: 'Nothing to translate.'
+        file_other_system: 'This file belongs to another system ({{ plugin }}).'
+        file_not_found: 'The product this file was exported from no longer exists.'
+        file_no_language: 'The PIM has no activated locale {{ language }}.'
+        file_html_one: 'An HTML file holds exactly one target language.'
     keycheck:
         ok: 'API key checked: the connection to Supertext works.'
         invalid: 'Supertext rejected the API key. Check that you copied the whole key, or generate a new one at supertext.com → Integrations → API (requires the Admin role). No Supertext account yet? Create one at supertext.com.'
@@ -65,7 +73,7 @@ supertext_translation:
         not_in_channel: Not used by the channels of these values
         existing: Has its own text ({{ count }} values)
         to_translate: "{{ count }} values to translate"
-        unmapped: 'No Supertext language: an administrator can map this locale under System → Supertext.'
+        unmapped: 'No Supertext language: an administrator can choose one for this locale under System → Supertext (Languages).'
         overwrite: Overwrite existing translations
         overwrite_warning: "The existing text is replaced in: {{ languages }}. The history tab keeps the previous text."
         translate: Translate
@@ -97,17 +105,38 @@ supertext_translation:
         version_reports_help: 'Sends the site URL and the versions of this plugin, the PIM and the runtime to Supertext when you save these settings and after an update, so Supertext support can see which version you run. No content, no API key and no personal data are sent.'
         version_reports_environment: 'The SUPERTEXT_VERSION_REPORTS environment variable is set on this server and takes precedence.'
         languages: Languages
-        languages_help: 'Choose the Supertext language for each locale. Locales that equal a Supertext language are pre-filled (de_CH → de-CH); the others need one (es_ES → es, nl_NL → nl), otherwise they cannot be translated.'
+        languages_help: 'Choose the Supertext language for each locale (also used when the locale is the source). The drop-down is preselected with the matching Supertext language (de_CH → de-CH) or its default (de_DE → de-DE, es_ES → es, zh_TW → zh-Hant). Locales without one (en_IE, de_LI) show “— Choose —” and cannot be translated until you choose a language.'
         locale: Locale
         code: 'Supertext language'
         politeness: Form of address
         politeness_default: Default
         politeness_more: Formal
         politeness_less: Informal
-        choose_code: 'Choose a Supertext language'
-        not_mapped: 'Not mapped: choose a Supertext language'
+        choose_code: '— Choose —'
+        not_mapped: 'No default for this locale: choose a Supertext language'
         no_politeness: 'Supertext offers no formal/informal choice for this language'
+        review: Translation review
+        review_label: 'Translation review for {{ language }}'
+        review_help: 'Translation review: translations into a locale with this box ticked go through Supertext''s review service, so reviewers can check and correct them on the website with the Supertext Localization Review extension. Their corrections are used the next time the product is translated.'
+        review_off: 'The SUPERTEXT_REVIEW_URL environment variable is empty on this server: Translation review is off for every locale.'
         test: Test connection
         saved: Settings saved.
         version: "Supertext Translation for Akeneo PIM, version"
         version_unknown: unknown
+    files:
+        export_action: 'Export for translation'
+        import_action: 'Import translation'
+        format: 'File format'
+        xliff: 'XLIFF 1.2 (for translation tools)'
+        html: 'HTML (one language per file)'
+        download: 'Download file'
+        file: 'Translated file (XLIFF or HTML)'
+        include_changed: 'Also import texts whose source changed since the export'
+        nothing: 'Nothing to translate.'
+        summary:
+            ok: 'Imported: {{ count }}'
+            existing: 'Kept, already has its own text: {{ count }}'
+            changed: 'Skipped, source changed since the export: {{ count }}'
+            untranslated: 'Not translated in the file: {{ count }}'
+            invalid: 'Formatting changed, not imported: {{ count }}'
+            missing: 'Not in the file: {{ count }}'

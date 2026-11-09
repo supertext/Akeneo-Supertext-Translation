@@ -4,10 +4,10 @@ For administrators: install the bundle, enter the Supertext API key, set up the 
 
 ## Requirements
 
-- Akeneo PIM **Community Edition 2026.4** (tested; 2026.3 should work too), installed from the Community Standard Edition (`akeneo/pim-community-standard`), with its PHP 8.3, MySQL 8.4 and Elasticsearch 8 requirements.
+- Akeneo PIM **Community Edition 2026.5** (tested; 2026.4 was tested before, 2026.3 should work too), installed from the Community Standard Edition (`akeneo/pim-community-standard`), with its PHP 8.3, MySQL 8.4 and Elasticsearch 8 requirements.
 - Node.js 18 and Yarn, which Akeneo needs anyway to build its front end: the bundle adds screens, so the front end is rebuilt once after installing.
 - A Supertext account and an API key. No Supertext account yet? Create one at [supertext.com](https://www.supertext.com/person/en/account/signin). Generate your API key at [supertext.com → Integrations → API](https://www.supertext.com/en/integrations/api) (requires the Admin role).
-- Outgoing HTTPS from the Akeneo server to `api.supertext.com` (and, for the optional version information, to Supertext's Commando Center), and PHP's curl extension (part of Akeneo's requirements).
+- Outgoing HTTPS from the Akeneo server to `api.supertext.com` (and, for the optional version information, to Supertext's Commando Center; for [Translation review](#translation-review), to Supertext's review service), and PHP's curl extension (part of Akeneo's requirements).
 - `AKENEO_PIM_URL` set to the PIM's public address, as Akeneo expects anyway (it is the site URL in version reports and the base of the ping address).
 
 The bundle is for the self-hosted Community Edition. Akeneo's SaaS editions (Serenity, Growth) don't run third-party bundles.
@@ -99,14 +99,25 @@ Akeneo translates between **locales**, and a locale is active when a channel use
 ![The E-commerce channel with the locales German, English, French and Italian (Switzerland)](images/09-channel-locales.png)
 
 - Values of attributes that are *localizable* get one value per locale. Values that are also *scopable* (per channel) are translated into the locales of their channel only.
-- **Language mapping.** Supertext accepts only its own language codes, and the bundle doesn't guess: under **System → Supertext → Languages** every activated locale gets a **Supertext language** from Supertext's list (shown with name and code).
-  - A locale that equals a Supertext code (apart from case and `_`/`-`) is pre-filled and needs nothing: `de_CH` → `de-CH`, `de_DE` → `de-DE`, `en_US` → `en-US`, `fr_FR` → `fr-FR`, `it_CH` → `it-CH`, `pt_BR` → `pt-BR`.
-  - All other locales must be mapped, otherwise they can't be translated (the page marks them *Not mapped*; the dialog greys them out). Supertext uses a region only for German, English, French, Italian and Portuguese, a script for Chinese and Serbian and bare codes for all other languages, so for example `es_ES` → `es`, `nl_NL` → `nl`, `sv_SE` → `sv`, `ja_JP` → `ja`, `zh_CN` → `zh-Hans`, `zh_TW` → `zh-Hant`.
-  - You can also choose another variant than the exact match, e.g. `de-CH` for a `de_DE` locale whose texts follow Swiss spelling, or `gsw-u-sd-chzh` (Swiss German, Zurich).
-  - The same mapping is used for the source: the source is sent as Supertext's bare language (`en_US` → `en`, a `de_DE` mapped to `de-CH` → `de`).
-- **Form of address** per locale: *Default*, *Formal* or *Informal* (for languages that distinguish them, such as German *Sie* and *du*). Supertext doesn't offer it for English (`en-GB`, `en-US`), Swiss German, Romansh (`rm`), Albanian (`sq`) and Serbian; for those the page shows a note, and a *Formal* or *Informal* that was set anyway makes the translation fail with a message to set it to *Default*.
+- **Language mapping.** Supertext accepts only its own language codes. Under **System → Supertext → Languages** every activated locale has a **Supertext language** drop-down with Supertext's languages (name in your interface language, with the code). The same choice is used when the locale is the source.
+  - The drop-down is preselected: with the Supertext language the locale equals (apart from case and `_`/`-`: `de_CH` → `de-CH`, `en_US` → `en-US`, `pt_BR` → `pt-BR`), else with its default. Until you save, the preselection is also what a translation uses. Defaults (Supertext SDK 0.4.0):
 
-Supertext's languages (October 2026): targets `bg`, `cs`, `da`, `de-AT`, `de-CH`, `de-DE`, `el`, `en-GB`, `en-US`, `es`, `fi`, `fr-CH`, `fr-FR`, `gsw-u-sd-chbe`, `gsw-u-sd-chzh`, `hr`, `hu`, `it-CH`, `it-IT`, `ja`, `ko`, `nb`, `nl`, `pl`, `pt-BR`, `pt-PT`, `rm`, `ru`, `sk`, `sl`, `sq`, `sr-Cyrl`, `sr-Latn`, `sv`, `tr`, `zh-Hans`, `zh-Hant`; sources (bare) `bg`, `cs`, `da`, `de`, `el`, `en`, `es`, `fi`, `fr`, `gsw`, `hr`, `hu`, `it`, `ja`, `ko`, `nb`, `nl`, `pl`, `pt`, `rm`, `ru`, `sk`, `sl`, `sq`, `sr`, `sv`, `tr`, `zh`. `bin/console supertext:check` lists every activated locale with the code it is sent as, or *not mapped*.
+    | Locale | Supertext language |
+    | --- | --- |
+    | `de`, `en`, `fr`, `it`, `pt` (bare) | `de-DE`, `en-US`, `fr-FR`, `it-IT`, `pt-PT` |
+    | `zh`, `zh_CN`, `zh_SG` / `zh_TW`, `zh_HK`, `zh_MO` | `zh-Hans` / `zh-Hant` |
+    | `sr`, `sr_Latn_RS` / `sr_Cyrl_RS` | `sr-Latn` / `sr-Cyrl` |
+    | a region of a language Supertext offers without one | the bare language: `es_ES` → `es`, `nl_NL` → `nl`, `sv_SE` → `sv`, `ja_JP` → `ja`, `nb_NO` → `nb` |
+
+  - Nothing else is guessed: locales such as `en_IE`, `en_AU`, `de_LI`, `fr_BE`, `sr_RS` or `gsw` have no default. Their drop-down shows *— Choose —* with the note *No default for this locale*, the translate dialog greys them out, and they can't be translated until you choose a language.
+  - You can choose another variant than the preselected one, e.g. `de-CH` for a `de_DE` locale whose texts follow Swiss spelling, or `gsw-u-sd-chzh` (Swiss German, Zurich). Saving stores the chosen language of every locale; only languages from Supertext's list are accepted.
+  - The source is sent as Supertext's bare language (`en_US` → `en`, a `de_DE` mapped to `de-CH` → `de`).
+  - There is no environment variable or config file for the mapping: it lives only on this page (in Akeneo's database).
+  - Updating from an earlier version keeps every saved language as it is, also a code Supertext doesn't list (it stays selected and can be saved again). Locales that had no language (e.g. `es_ES`) are now preselected with their default.
+- **Form of address** per locale: *Default*, *Formal* or *Informal* (for languages that distinguish them, such as German *Sie* and *du*). Supertext doesn't offer it for English (`en-GB`, `en-US`), Swiss German, Romansh (`rm`), Albanian (`sq`) and Serbian; for those the page shows a note instead of the choice, and a *Formal* or *Informal* saved earlier is ignored (Supertext's default tone is used).
+- **Translation review** per locale: a checkbox, off by default. See [Translation review](#translation-review).
+
+Supertext's languages (October 2026): targets `bg`, `cs`, `da`, `de-AT`, `de-CH`, `de-DE`, `el`, `en-GB`, `en-US`, `es`, `fi`, `fr-CH`, `fr-FR`, `gsw-u-sd-chbe`, `gsw-u-sd-chzh`, `hr`, `hu`, `it-CH`, `it-IT`, `ja`, `ko`, `nb`, `nl`, `pl`, `pt-BR`, `pt-PT`, `rm`, `ru`, `sk`, `sl`, `sq`, `sr-Cyrl`, `sr-Latn`, `sv`, `tr`, `zh-Hans`, `zh-Hant`; sources (bare) `bg`, `cs`, `da`, `de`, `el`, `en`, `es`, `fi`, `fr`, `gsw`, `hr`, `hu`, `it`, `ja`, `ko`, `nb`, `nl`, `pl`, `pt`, `rm`, `ru`, `sk`, `sl`, `sq`, `sr`, `sv`, `tr`, `zh`. `bin/console supertext:check` lists every activated locale with the code it is sent as (mapping, exact match or default), or *not mapped*.
 
 ## Which values are translated
 
@@ -114,7 +125,7 @@ Localizable **text** and **text area** attributes, rich text included (headings,
 
 ## Interface languages
 
-The bundle's screens (the *Translate with Supertext* dialog, System → Supertext and their messages) are available in English, German, French and Italian. They follow each user's Akeneo interface language: the *UI locale* in the user's own settings (user menu → *My settings*). Other UI locales show the English texts. Console commands and log entries stay English.
+The bundle's screens (the *Translate with Supertext*, *Export for translation* and *Import translation* dialogs, System → Supertext and their messages) are available in English, German, French and Italian. They follow each user's Akeneo interface language: the *UI locale* in the user's own settings (user menu → *My settings*). Other UI locales show the English texts. Console commands and log entries stay English.
 
 ## Permissions
 
@@ -122,7 +133,10 @@ The bundle's screens (the *Translate with Supertext* dialog, System → Supertex
 | --- | --- |
 | Translate a product | *Products → Edit attributes of a product* |
 | Translate a product model | *Product models → Edit attributes of a product model* |
+| Export for translation, Import translation | The same as translating the product or product model |
 | System → Supertext (API key and languages) | *System configuration* (the same permission as System → Configuration) |
+
+*Export for translation* and *Import translation* need the same permission as translating (*Edit attributes* of a product or product model, for every product a file holds). There is nothing to configure for them and no API key is needed (nothing is sent to Supertext). Uploads larger than 10 MB are refused before they are read (PHP's `upload_max_filesize` and `post_max_size` must allow the file too); files are parsed in memory and never stored.
 
 There is no separate permission for translating: whoever may edit a product's attributes may translate it. In a new Akeneo installation every role has all permissions; remove *System configuration* from the roles that shouldn't see the API settings.
 
@@ -135,10 +149,25 @@ There is no separate permission for translating: whoever may edit a product's at
 | API address | System → Supertext | none | Only for *Custom address*. |
 | Timeout (seconds) | System → Supertext | 180 | How long to wait for one language (30 to 1800). |
 | Send version information to Supertext | System → Supertext, or `SUPERTEXT_VERSION_REPORTS` | on | See *Version information* below. `SUPERTEXT_VERSION_REPORTS=0` (or `false`, `off`, `no`) turns it off, `1` on; the variable takes precedence over the checkbox. |
-| Supertext language | System → Supertext → Languages | the exact match, else none | Per locale, from Supertext's list (e.g. `de-CH`, `es`). Locales without one (*Not mapped*) can't be translated. See *Languages*. |
-| Form of address | System → Supertext → Languages | Default | Per locale: Default, Formal, Informal (not offered for every language). |
+| Supertext language | System → Supertext → Languages | the exact match, else the SDK default (`es_ES` → `es`), else none | Per locale, a drop-down with Supertext's list (e.g. `de-CH`, `es`). Locales without one (*— Choose —*) can't be translated. See *Languages*. |
+| Form of address | System → Supertext → Languages | Default | Per locale: Default, Formal, Informal (only for languages that offer it). |
+| Translation review | System → Supertext → Languages | off | Per locale: translations into it go through Supertext's review service (see [Translation review](#translation-review)). Stored with the locale's language (`languages.<locale>.review`). |
+| Review service address | `SUPERTEXT_REVIEW_URL` | Supertext's review service | Address of the review service for locales with *Translation review* on. Set but empty turns review off for every locale (the checkboxes are then read-only). Only change it when Supertext gives you another address. |
 
 The bottom of System → Supertext shows the installed version of the bundle (as Composer reports it) with a link to its GitHub release; `bin/console supertext:check` prints it too.
+
+## Translation review
+
+With **Translation review**, people check the translations on the website itself and correct them there: customers or Supertext linguists open the original and the translated page side by side in Chrome with the *Supertext Localization Review* extension and fix texts in a side panel. Their corrections come back into Akeneo.
+
+Turn it on per language for the locale that is translated **into**: **System → Supertext → Languages**, tick **Translation review** next to the locale's *Supertext language* drop-down (e.g. *German (Switzerland)*) and save. Untick it to turn it off again; nothing else changes.
+
+- Translations into that locale then go through Supertext's review service instead of directly to Supertext. It answers exactly like Supertext and passes everything on with your API key, so billing, languages, form of address and error messages stay the same. Other locales keep going directly to Supertext.
+- The review service keeps every translation of your account. A text it has translated before gets the same translation again (without a new Supertext call), and once a reviewer has corrected it, the corrected text.
+- **Corrections arrive with the next translation:** after a review, translate the products again (*Translate with Supertext* with *Overwrite existing translations*, or `supertext:translate … --overwrite`) to write the corrections into Akeneo. As always, overwriting replaces manual changes in the translated values.
+- Reviewers get a review link for your site from Supertext; nothing to set up in Akeneo.
+- The review service works with keys of the **live** Supertext API. With *Staging*, *Testing* or a custom address, leave review off.
+- *Export for translation* and *Import translation* don't use the review service (they send nothing to Supertext). The API key check (*Test connection*, after saving) still goes directly to Supertext.
 
 ## Version information
 
@@ -172,8 +201,8 @@ Products are given by identifier or UUID. Without `--overwrite`, values that alr
 | "Authentication failed. Please check the Supertext API key." | The key is wrong or was revoked: generate a new one at <https://www.supertext.com/en/integrations/api> and save it. |
 | "Supertext rejected the API key" on System → Supertext | Check that the whole key was copied (or `SUPERTEXT_API_KEY`), or generate a new one at <https://www.supertext.com/en/integrations/api> (Admin role required). No Supertext account yet? Create one at <https://www.supertext.com/person/en/account/signin>. Save again or click *Test connection*. |
 | "The API key couldn't be checked because Supertext can't be reached" | The Akeneo server can't reach `api.supertext.com` (firewall, proxy, DNS). Translations need the same connection. |
-| "The language … has no Supertext language yet." / *Not mapped* | Choose a Supertext language for that locale under System → Supertext → Languages (see *Languages*), then save. |
-| "Supertext offers no formal or informal tone for this language." | Set the locale's *Form of address* to *Default* under System → Supertext → Languages. |
+| "The language … has no Supertext language." / *No default for this locale* | The locale has no default (e.g. `en_IE`): choose one in its *Supertext language* drop-down under System → Supertext → Languages (see *Languages*), then save. |
+| "Supertext offers no formal or informal tone for this language." | Open System → Supertext → Languages and save once (a *Formal*/*Informal* saved for such a language is removed). |
 | "Supertext does not support this language pair" | Check the mapping of both locales under System → Supertext → Languages (source and target must differ and be Supertext languages). |
 | `supertext:check` says "Version reports to Supertext: not sent (set AKENEO_PIM_URL …)" | Commands don't know the PIM's address without `AKENEO_PIM_URL`; set it in `.env.local` (Akeneo uses it for e-mails and the API too). |
 | "Too many requests to Supertext." | The API limits requests per second per key. The bundle already retries; wait a moment and try again. |
@@ -181,4 +210,7 @@ Products are given by identifier or UUID. Without `--overwrite`, values that alr
 | "Akeneo did not accept the translation: …" | Akeneo's own validation rejected a translated value (for example a text attribute's maximum length). That language is left unchanged; the others are saved. |
 | "Your Supertext translation limit is exceeded." | Upgrade your Supertext subscription. |
 | A language is greyed out in the dialog | None of the product's text values belongs to a channel with that locale. Add the locale to the channel (Settings → Channels). |
+| "Authentication failed" only for locales with *Translation review* | The review service only works with keys of the live Supertext API: with *Staging*, *Testing* or a custom address leave review off. |
+| Reviewers' corrections don't show up in Akeneo | They arrive with the next translation: translate the products into that locale again with *Overwrite existing translations*. Check that the locale's *Translation review* is ticked. |
+| The *Translation review* checkboxes are read-only | `SUPERTEXT_REVIEW_URL` is set but empty on the server, which turns review off for every locale. Remove the variable to use Supertext's review service. |
 | Errors in detail | `var/logs/prod.log` (search for "Supertext"). |

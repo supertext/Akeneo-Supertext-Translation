@@ -38,3 +38,16 @@ supertext_translation_rest_translate:
     requirements: { type: 'product|product_model', id: '[0-9a-fA-F-]+' }
     methods: [POST]
     options: { expose: true }
+
+supertext_translation_rest_export:
+    path: /supertext/rest/{type}/{id}/export
+    defaults: { _controller: 'supertext_translation.controller.translation_file::exportAction' }
+    requirements: { type: 'product|product_model', id: '[0-9a-fA-F-]+' }
+    methods: [POST]
+    options: { expose: true }
+
+supertext_translation_rest_import:
+    path: /supertext/rest/import
+    defaults: { _controller: 'supertext_translation.controller.translation_file::importAction', _format: json }
+    methods: [POST]
+    options: { expose: true }

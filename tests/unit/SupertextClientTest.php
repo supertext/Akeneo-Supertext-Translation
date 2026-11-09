@@ -25,7 +25,7 @@ final class SupertextClientTest extends TestCase
     }
 
     /** @param callable(HttpRequest): HttpResponse $handler */
-    private function client(callable $handler, string $key = 'test-key'): SupertextClient
+    private function client(callable $handler, string $key = 'test-key', string $reviewUrl = ''): SupertextClient
     {
         $transport = new class ($handler, $this->requests) implements HttpTransport {
             /** @param \ArrayObject<int, HttpRequest> $requests */
@@ -41,8 +41,8 @@ final class SupertextClientTest extends TestCase
             }
         };
 
-        return new SupertextClient($key, 'https://api.test/v1', 10, 'Akeneo-Supertext/test', $transport, 0.01, static function (): void {
-        });
+        return new SupertextClient($key, 'https://api.test/v1', 10, 'Akeneo-Supertext-Translation/test', $transport, 0.01, static function (): void {
+        }, $reviewUrl);
     }
 
     private static function api(string $translation): callable
@@ -74,7 +74,7 @@ final class SupertextClientTest extends TestCase
         $post = $this->requests[0];
         self::assertSame('https://api.test/v1/translate/ai/file', $post->url);
         self::assertSame('Supertext-Auth-Key test-key', $post->headers['Authorization']);
-        self::assertStringContainsString('Akeneo-Supertext/test', $post->headers['User-Agent']);
+        self::assertStringContainsString('Akeneo-Supertext-Translation/test', $post->headers['User-Agent']);
         self::assertStringContainsString("name=\"target_lang\"\r\n\r\nde-CH\r\n", (string) $post->body);
         self::assertStringContainsString("name=\"source_lang\"\r\n\r\nen\r\n", (string) $post->body);
         self::assertStringContainsString("name=\"politeness\"\r\n\r\nmore\r\n", (string) $post->body);
@@ -190,5 +190,39 @@ final class SupertextClientTest extends TestCase
         foreach (SupertextException::SDK_KEYS as $key) {
             self::assertMatchesRegularExpression('/^        ' . preg_quote($key, '/') . ':/m', $messages, $key);
         }
+    }
+
+    public function testReviewLocalesGoThroughTheReviewService(): void
+    {
+        $client = $this->client(self::api('<div data-st-id="0">Hallo</div>'), reviewUrl: 'https://review.test/v1/');
+
+        self::assertSame($client, $client->forReview(false));
+        $review = $client->forReview(true);
+        self::assertNotSame($client, $review);
+        self::assertSame($review, $client->forReview(true), 'one review client');
+
+        self::assertSame(['Hallo'], $review->translateTexts([Segment::text('Hello')], 'de-CH', 'en'));
+        self::assertSame(['Hallo'], $client->translateTexts([Segment::text('Hello')], 'fr-CH', 'en'));
+
+        $calls = array_map(static fn (HttpRequest $r): array => [(string) parse_url($r->url, PHP_URL_HOST), $r->method], $this->requests->getArrayCopy());
+        self::assertSame(
+            [['review.test', 'POST'], ['review.test', 'GET'], ['review.test', 'GET'], ['review.test', 'DELETE'], ['api.test', 'POST'], ['api.test', 'GET'], ['api.test', 'GET'], ['api.test', 'DELETE']],
+            $calls,
+            'German (review on): upload, status, download and delete through the review service; French directly',
+        );
+        self::assertSame('Supertext-Auth-Key test-key', $this->requests[0]->headers['Authorization'], 'same key');
+        self::assertStringContainsString('Akeneo-Supertext-Translation/test', $this->requests[0]->headers['User-Agent'], 'same User-Agent');
+
+        $client->validateApiKey();
+        self::assertSame('https://api.test/v1/features', $this->requests[\count($this->requests) - 1]->url, 'the key check goes directly');
+    }
+
+    public function testReviewOffWithoutReviewUrl(): void
+    {
+        $client = $this->client(self::api('<div data-st-id="0">Hallo</div>'));
+        self::assertSame($client, $client->forReview(true), 'empty review URL: review off');
+
+        $client = $this->client(self::api('<div data-st-id="0">Hallo</div>'), reviewUrl: 'https://api.test/v1/');
+        self::assertSame($client, $client->forReview(true), 'same URL as the API: no second client');
     }
 }

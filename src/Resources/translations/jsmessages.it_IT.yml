@@ -45,10 +45,18 @@ supertext_translation:
         invalid_url: L'indirizzo API deve iniziare con https://.
         missing_url: Inserisca l'indirizzo API per un ambiente personalizzato.
         invalid_timeout: Il timeout deve essere compreso tra 30 e 1800 secondi.
-        invalid_code: '«{{ code }}» non è una lingua Supertext valida per {{ locale }} (esempi: de-CH, es).'
+        invalid_code: '«{{ code }}» non è una lingua Supertext ({{ locale }}). Ne scelga una dall’elenco.'
         invalid_language_pair: 'Supertext non supporta questa combinazione di lingue ({{ source }} → {{ target }}). Verifichi l’associazione delle lingue in Sistema → Supertext.'
-        unsupported_language: 'La lingua {{ language }} non è ancora associata a una lingua Supertext. Chieda al Suo amministratore di associarla in Sistema → Supertext (Lingue).'
+        unsupported_language: 'La lingua {{ language }} non ha una lingua Supertext. Chieda al Suo amministratore di sceglierne una nell’elenco «Lingua Supertext» in Sistema → Supertext (Lingue).'
         unsupported_feature: 'Supertext non offre un tono formale o informale per questa lingua. Imposti la forma di cortesia su Predefinita in Sistema → Supertext (Lingue).'
+        file_invalid: 'Questo file non è un file di traduzione XLIFF o HTML valido.'
+        file_missing_metadata: 'Questo file non è stato esportato dal bundle Supertext oppure la sua intestazione è stata rimossa.'
+        file_too_large: 'Il file è troppo grande (al massimo 10 MB).'
+        file_nothing: 'Niente da tradurre.'
+        file_other_system: 'Questo file appartiene a un altro sistema ({{ plugin }}).'
+        file_not_found: 'Il prodotto da cui è stato esportato questo file non esiste più.'
+        file_no_language: 'Il PIM non ha l’impostazione locale attivata {{ language }}.'
+        file_html_one: 'Un file HTML contiene esattamente una lingua di destinazione.'
     keycheck:
         ok: 'Chiave API verificata: la connessione a Supertext funziona.'
         invalid: 'Supertext ha rifiutato la chiave API. Verifichi di aver copiato l''intera chiave oppure ne generi una nuova su supertext.com → Integrations → API (richiede il ruolo Admin). Non ha ancora un account Supertext? Ne crei uno su supertext.com.'
@@ -65,7 +73,7 @@ supertext_translation:
         not_in_channel: Non utilizzata dai canali di questi valori
         existing: Ha già un testo proprio ({{ count }} valori)
         to_translate: '{{ count }} valori da tradurre'
-        unmapped: 'Nessuna lingua Supertext: un amministratore può associare questa impostazione locale in Sistema → Supertext.'
+        unmapped: 'Nessuna lingua Supertext: un amministratore può sceglierne una per questa impostazione locale in Sistema → Supertext (Lingue).'
         overwrite: Sovrascrivi le traduzioni esistenti
         overwrite_warning: 'Il testo esistente viene sostituito in: {{ languages }}. La scheda Cronologia conserva il testo precedente.'
         translate: Traduci
@@ -97,17 +105,38 @@ supertext_translation:
         version_reports_help: 'Invia a Supertext l''URL del sito e le versioni di questo plugin, del PIM e dell''ambiente di esecuzione quando salva queste impostazioni e dopo un aggiornamento. In questo modo l''assistenza Supertext vede quale versione utilizza. Non vengono trasmessi contenuti, chiavi API né dati personali.'
         version_reports_environment: 'Su questo server è impostata la variabile d’ambiente SUPERTEXT_VERSION_REPORTS, che ha la precedenza.'
         languages: Lingue
-        languages_help: 'Scelga la lingua Supertext per ogni impostazione locale. Le impostazioni locali che corrispondono a una lingua Supertext sono precompilate (de_CH → de-CH); le altre ne richiedono una (es_ES → es, nl_NL → nl), altrimenti non possono essere tradotte.'
+        languages_help: 'Scelga la lingua Supertext per ogni impostazione locale (vale anche quando l’impostazione locale è la lingua di partenza). È preselezionata la lingua Supertext corrispondente (de_CH → de-CH) o il suo valore predefinito (de_DE → de-DE, es_ES → es, zh_TW → zh-Hant). Le impostazioni locali senza (en_IE, de_LI) mostrano «— Scegliere —» e non possono essere tradotte finché non sceglie una lingua.'
         locale: Impostazione locale
         code: 'Lingua Supertext'
         politeness: Forma di cortesia
         politeness_default: Predefinita
         politeness_more: Formale (Lei)
         politeness_less: Informale (tu)
-        choose_code: 'Scegliere una lingua Supertext'
-        not_mapped: 'Non associata: scelga una lingua Supertext'
+        choose_code: '— Scegliere —'
+        not_mapped: 'Nessun valore predefinito per questa impostazione locale: scelga una lingua Supertext'
         no_politeness: 'Supertext non offre una scelta formale/informale per questa lingua'
+        review: Revisione delle traduzioni
+        review_label: 'Revisione delle traduzioni per {{ language }}'
+        review_help: 'Revisione delle traduzioni: le traduzioni in un’impostazione locale selezionata passano dal servizio di revisione di Supertext, così i revisori possono controllarle e correggerle direttamente sul sito con l’estensione Supertext Localization Review. Le loro correzioni vengono riprese alla prossima traduzione del prodotto.'
+        review_off: 'La variabile d’ambiente SUPERTEXT_REVIEW_URL è vuota su questo server: la revisione delle traduzioni è disattivata per tutte le impostazioni locali.'
         test: Verifica connessione
         saved: Impostazioni salvate.
         version: Supertext Translation per Akeneo PIM, versione
         version_unknown: sconosciuta
+    files:
+        export_action: 'Esporta per la traduzione'
+        import_action: 'Importa traduzione'
+        format: 'Formato del file'
+        xliff: 'XLIFF 1.2 (per strumenti di traduzione)'
+        html: 'HTML (una lingua per file)'
+        download: 'Scarica il file'
+        file: 'File tradotto (XLIFF o HTML)'
+        include_changed: 'Importa anche i testi il cui testo di partenza è cambiato dopo l’esportazione'
+        nothing: 'Niente da tradurre.'
+        summary:
+            ok: 'Importati: {{ count }}'
+            existing: 'Mantenuti, hanno già un proprio testo: {{ count }}'
+            changed: 'Saltati, testo di partenza modificato dopo l’esportazione: {{ count }}'
+            untranslated: 'Non tradotti nel file: {{ count }}'
+            invalid: 'Formattazione modificata, non importati: {{ count }}'
+            missing: 'Non presenti nel file: {{ count }}'

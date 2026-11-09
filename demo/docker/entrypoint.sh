@@ -66,5 +66,7 @@ for v in APP_ENV APP_DEBUG APP_SECRET APP_DATABASE_HOST APP_DATABASE_PORT APP_DA
   APP_INDEX_HOSTS APP_PRODUCT_AND_PRODUCT_MODEL_INDEX_NAME AKENEO_PIM_URL SUPERTEXT_API_KEY SUPERTEXT_API_URL SUPERTEXT_VERSION_REPORTS SUPERTEXT_REPORT_URL; do
   if [ -n "${!v:-}" ]; then printf 'PassEnv %s\n' "$v"; fi
 done > /etc/apache2/conf-enabled/akeneo-env.conf
+# SUPERTEXT_REVIEW_URL also when set but empty (= Translation review off for every locale).
+if [ -n "${SUPERTEXT_REVIEW_URL+x}" ]; then echo 'PassEnv SUPERTEXT_REVIEW_URL' >> /etc/apache2/conf-enabled/akeneo-env.conf; fi
 echo "[demo] Starting Apache on port ${PORT:-8080} (${AKENEO_PIM_URL})."
 exec apache2-foreground

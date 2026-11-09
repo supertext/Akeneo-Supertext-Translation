@@ -19,6 +19,50 @@ extensions:
         config:
             type: product_model
 
+    # "…" menu of the product edit form: Export for translation
+    pim-product-edit-form-supertext-export:
+        module: supertext-translation/files-action
+        parent: pim-product-edit-form-secondary-actions
+        targetZone: secondary-actions
+        aclResourceId: pim_enrich_product_edit_attributes
+        position: 71
+        config:
+            type: product
+            mode: export
+
+    # "…" menu of the product edit form: Import translation
+    pim-product-edit-form-supertext-import:
+        module: supertext-translation/files-action
+        parent: pim-product-edit-form-secondary-actions
+        targetZone: secondary-actions
+        aclResourceId: pim_enrich_product_edit_attributes
+        position: 72
+        config:
+            type: product
+            mode: import
+
+    # "…" menu of the product model edit form: Export for translation
+    pim-product-model-edit-form-supertext-export:
+        module: supertext-translation/files-action
+        parent: pim-product-model-edit-form-secondary-actions
+        targetZone: secondary-actions
+        aclResourceId: pim_enrich_product_model_edit_attributes
+        position: 71
+        config:
+            type: product_model
+            mode: export
+
+    # "…" menu of the product model edit form: Import translation
+    pim-product-model-edit-form-supertext-import:
+        module: supertext-translation/files-action
+        parent: pim-product-model-edit-form-secondary-actions
+        targetZone: secondary-actions
+        aclResourceId: pim_enrich_product_model_edit_attributes
+        position: 72
+        config:
+            type: product_model
+            mode: import
+
     # System → Supertext
     pim-menu-system-supertext:
         module: pim/menu/item

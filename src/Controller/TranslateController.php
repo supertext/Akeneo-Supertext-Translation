@@ -83,7 +83,7 @@ final class TranslateController
             'configured' => $this->settings->apiKey() !== '',
             'links'      => ['signup' => Settings::SIGNUP_URL, 'api_key' => Settings::API_KEY_URL],
             'source'     => $source,
-            // Locales without a Supertext language (no mapping, no exact match): nothing can be sent for them.
+            // Locales without a Supertext language (no mapping, no exact match, no SDK default): nothing can be sent for them.
             'unmapped'   => array_values(array_filter($locales, fn (string $locale): bool => $this->settings->languageCodeOrNull($locale) === null)),
             // A variant's texts usually live on its product model (they are translated there).
             'variant'    => $entity instanceof EntityWithFamilyVariantInterface && $entity->getParent() !== null,

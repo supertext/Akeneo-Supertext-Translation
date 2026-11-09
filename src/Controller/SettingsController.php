@@ -17,7 +17,6 @@ use Supertext\AkeneoTranslationBundle\Reporting\Reporting;
 use Supertext\AkeneoTranslationBundle\Settings\Settings;
 use Supertext\AkeneoTranslationBundle\Translation\EntityTranslator;
 use Supertext\PluginHealth\KeyCheck;
-use Supertext\Sdk\V1\Languages;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -110,18 +109,21 @@ final class SettingsController
     {
         $key       = $this->settings->apiKey();
         $uiLocale  = (string) $this->userContext->getUiLocaleCode();
+        $uiLocale  = $uiLocale !== '' ? $uiLocale : 'en_US';
         $languages = [];
 
         foreach ($this->translator->activatedLocales() as $locale) {
             $stored      = $this->settings->languages()[$locale] ?? [];
-            $exact       = Settings::exactLanguageCode($locale);
+            $suggested   = Settings::suggestedLanguageCode($locale);
             $languages[] = [
-                'locale'     => $locale,
-                'label'      => (string) \Locale::getDisplayName($locale, $uiLocale !== '' ? $uiLocale : 'en_US'),
-                // The saved mapping, else the exact match (pre-filled), else "" (not mapped: nothing can be sent).
-                'code'       => (string) ($stored['code'] ?? $exact ?? ''),
-                'exact_code' => (string) $exact,
-                'politeness' => $this->settings->politeness($locale),
+                'locale'         => $locale,
+                'label'          => (string) \Locale::getDisplayName($locale, $uiLocale),
+                // The saved mapping, else the suggestion (exact match or SDK default, preselected), else ""
+                // ("— choose —": no default, nothing can be sent until it is mapped).
+                'code'           => (string) ($stored['code'] ?? $suggested ?? ''),
+                'suggested_code' => (string) $suggested,
+                'politeness'     => $this->settings->politeness($locale),
+                'review'         => $this->settings->review($locale),
             ];
         }
 
@@ -137,10 +139,12 @@ final class SettingsController
             'api_url'                  => $this->settings->customUrl(),
             'api_url_from_environment' => $this->settings->baseUrlFromEnvironment(),
             'effective_url'            => $this->settings->baseUrl(),
+            // '' when SUPERTEXT_REVIEW_URL turns Translation review off for every locale.
+            'review_url'               => $this->settings->reviewUrl(),
             'timeout'                  => $this->settings->timeout(),
             'languages'                => $languages,
-            // Supertext's target languages (code, name, politeness) for the mapping's drop-downs.
-            'targets'                  => Languages::TARGETS,
+            // Supertext's target languages (code, localized name, politeness) for the mapping's drop-downs.
+            'targets'                  => Settings::targetOptions($uiLocale),
             'version_reports'          => $this->settings->versionReports() ?? true,
             'version_reports_from_environment' => $this->settings->versionReportsFromEnvironment(),
             'version_reports_enabled'  => $this->settings->versionReportsEnabled(),

@@ -27,11 +27,13 @@ cp -R "$SRC/sdk/php/src" "$DEST/src"
 cp "$SRC/sdk/php/autoload.php" "$DEST/autoload.php"
 cp "$SRC/LICENSE" "$DEST/LICENSE"
 printf '%s\n' "$COMMIT" > "$DEST/COMMIT"
+VERSION="$(sed -n "s/.*SDK_VERSION = '\\([^']*\\)'.*/\\1/p" "$DEST/src/Supertext.php")"
+printf '%s\n' "$VERSION" > "$DEST/VERSION"
 cat > "$DEST/README.md" <<EOF
 # Supertext SDK (bundled copy)
 
 PHP part of the [Supertext SDK](https://github.com/Supertext/Supertext-API-SDK-and-Guide),
-commit \`$COMMIT\`, namespace \`Supertext\\Sdk\` (unchanged).
+version $VERSION, commit \`$COMMIT\`, namespace \`Supertext\\Sdk\` (unchanged).
 
 Don't edit these files: fix the SDK in its own repository, then run \`scripts/vendor-sdk.sh\`.
 EOF
