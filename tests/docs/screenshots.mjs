@@ -51,6 +51,13 @@ async function shot(page, target, name, margin = 12) {
   console.log('wrote', name)
 }
 
+/** The key check shows when it ran: a fixed time, so the images only change when the UI does. */
+async function fixedTime(page) {
+  await page.locator('.supertext-key-check').evaluateAll((els) => els.forEach((el) => {
+    el.innerHTML = el.innerHTML.replace(/\d{1,2}\/\d{1,2}\/\d{4},? \d{1,2}:\d{2}(:\d{2})?\s?[AP]M/g, '10/16/2026, 9:30:00 AM')
+  }))
+}
+
 const header = (page) => page.locator('.AknTitleContainer, .AknDefault-mainContent header').first()
 
 async function openMenu(page) {
@@ -89,12 +96,12 @@ async function dialogBox(page) {
   await page.locator('.supertext-save-button').click()
   await form.getByText('Settings saved.').waitFor()
   await page.waitForTimeout(500)
+  await fixedTime(page)
   await page.screenshot({ path: OUT + '06-settings.png', clip: { x: 80, y: 0, width: 1200, height: 860 } })
   console.log('wrote 06-settings.png')
   await page.locator('.supertext-test-button').click()
-  await form.getByText(/Connected to/).waitFor()
-  // Shown address: the live API.
-  await form.getByText(/Connected to/).evaluate((el, url) => { el.innerHTML = el.innerHTML.replace(/https?:\/\/[^\s<]+/, url.replace(/\/$/, '') + '/.') }, LIVE_API)
+  await form.locator('.supertext-key-check').getByText(/connection to Supertext works/).waitFor()
+  await fixedTime(page)
   const top = await form.boundingBox()
   await page.screenshot({ path: OUT + '07-test-connection.png', clip: { x: 80, y: 0, width: 1200, height: top.y + 70 } })
   console.log('wrote 07-test-connection.png')

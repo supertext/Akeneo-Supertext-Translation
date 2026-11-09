@@ -135,7 +135,28 @@ find src tests demo/project/supertext-demo -name '*.php' -print0 | xargs -0 -n1 
 
 The unit tests need only PHPUnit 11 (no Akeneo install). `tests/unit/SettingsTest.php` covers the language mapping (exact match, SDK defaults, no guessing without a default, mapping for target and source, politeness only where offered, saving and validation, localized target names) and the reporting setting, *Translation review* per locale and `SUPERTEXT_REVIEW_URL`; `tests/unit/ReportingTest.php` the reporter glue with a fake transport for Supertext and the center (when each action reports, failures and the one-hour backoff, reports off, state without the key, state stored by the SDK 0.2 reporter, ping answers); `tests/unit/FileExportImportTest.php` the export/import glue with a fake store (reference round trip, the translator's keys and the language mapping in the jobs, other plugin / unknown reference / missing locale / no permission, `ok` written, `source_changed` only with the option, existing values kept unless overwriting, untranslated / invalid / missing not written, files over 10 MB refused); `tests/unit/SupertextClientTest.php` the bundle's client over the SDK (environments, key prefix, error keys, Translation review); `tests/Support/MemoryStorage.php` replaces the database. `tests/demo-check.sh` is the end-to-end test: it starts the demo image twice against MySQL and Elasticsearch with the stand-in API, checks the demo accounts (created once, passwords never logged), translates the sample product and product model with `supertext:translate`, checking the stored values, calls the public ping route and checks that the stand-in's fake Commando Center received an `installed` and a `check` report (`SUPERTEXT_REPORT_URL=http://127.0.0.1:8765/report`), without the API key.
 
-**CI** (`.github/workflows/ci.yml`): lint and unit tests on every push; the `phpstan` job runs PHPStan (see *Code quality and security checks*); the `demo` job builds the demo image (about 20 minutes: Composer, Yarn and Akeneo's webpack build) and runs `tests/demo-check.sh` against MySQL 8.4 and Elasticsearch 8.17 service containers.
+**CI** (`.github/workflows/ci.yml`): lint and unit tests on every push; the `phpstan` job runs PHPStan (see *Code quality and security checks*); the `demo` job builds the demo image (about 20 minutes: Composer, Yarn and Akeneo's webpack build) and runs `tests/demo-check.sh` against MySQL 8.4 and Elasticsearch 8.17 service containers. `.github/workflows/checks.yml` and `links.yml` lint the workflows and check the links. `.github/workflows/e2e.yml` runs the end-to-end test against the real Supertext API and regenerates the docs screenshots (see *End-to-end tests*).
+
+## End-to-end tests
+
+The unit tests and `tests/demo-check.sh` use fakes. `.github/workflows/e2e.yml` also tests against the **real Supertext API**, so changes on Supertext's side (language codes, regional variants, formatting, rate limits) show up. It runs on every push to `main` that touches the bundle, the demo or the tests, on pull requests that change the E2E test or workflow, every Monday (05:03 UTC), and by hand (*Actions → E2E → Run workflow*). It builds the demo image once (Docker layer cache in GitHub Actions) and starts it twice, each with its own database (`AKENEO_DB_NAME=akeneo_live` / `akeneo_docs`), its own Elasticsearch service (ports 9200 / 9201, so the search indexes don't mix) and demo accounts made up for the run:
+
+1. **Real API** (repository or organization secret `SUPERTEXT_API_KEY`; without it these steps are skipped with a warning). Version reports are off (`SUPERTEXT_VERSION_REPORTS=0`), so CI runs don't appear in the Commando Center.
+   - `tests/e2e/features.mjs` asks the live `GET features` (cost-free, no plugin or SDK code) whether every pair the demo translates (`en` → `de-CH`, `fr-CH`, `it-CH`, i.e. the locales `en_US` → `de_CH`, `fr_CH`, `it_CH` as the bundle sends them) is offered; a missing pair fails the run. Whether the plugin's own language list matches the API is the SDK's job (its own tests).
+   - `tests/e2e/live.mjs` (Playwright): the demo editor (`DEMO_EDITOR_*`, role *Catalog manager*) logs in and translates the sample product `praline-box-16` and the product model `dark-chocolate-bar` through Akeneo's UI (edit form → "…" → *Translate with Supertext*, every activated locale ticked). The test checks the dialog's request and answer (every locale sent and `translated`), that no error is shown, and then the database (`raw_values`): every English value has a value in each target locale, at least 80 % of them changed (a single word may stay the same), no `data-st-id`/placeholder is left, plain-text values stay plain text, bold, links (with their target), paragraphs, list items and line breaks are kept, the text is in the target language (common words of each language counted), `de_CH` has no "ß", the product stays enabled or disabled as it was, the variants keep their values (they inherit the texts) and no product or product model is created. Translating again with *Overwrite existing translations* must update the same products in place. Each run translates the two samples twice into three languages (around 4,000 characters on the key's account).
+2. **Stand-in API**: the docs screenshots (see *Docs screenshots*; the demo gets no `SUPERTEXT_API_KEY`, and `SUPERTEXT_REPORT_URL` points at the stand-in), so the images don't change with each machine translation. If `docs/images/` changed, a second job pushes the branch `automation/docs-screenshots` and opens (or updates) the pull request "Docs: regenerate screenshots" (only for runs on `main`). This needs *Settings → Actions → General → Allow GitHub Actions to create and approve pull requests*.
+
+If a run fails, the artifact `e2e-debug` has the dialog and result screenshots (`tests/e2e/artifacts/`), the demo containers' logs, Akeneo's application logs and the stand-in log. Locally:
+
+```bash
+cd tests/e2e && npm install && npx playwright install chromium
+# a fresh demo (new database and Elasticsearch) with a real SUPERTEXT_API_KEY, e.g. on port 8081 with AKENEO_DB_NAME=akeneo_live
+SUPERTEXT_API_KEY=… E2E_SOURCE=en E2E_TARGETS=de-CH,fr-CH,it-CH node features.mjs
+AKENEO_URL=http://127.0.0.1:8081 DATABASE_URL=mysql://root:root@127.0.0.1:3306/akeneo_live \
+  EDITOR_EMAIL=… EDITOR_PASSWORD=… npm run live
+```
+
+`live.mjs` also passes against the stand-in API (it returns real translations for the samples), which is how to try changes to the test without a key.
 
 ## Supertext SDK
 
@@ -224,7 +245,7 @@ BASE_URL=http://127.0.0.1:8090 DEMO_ADMIN_EMAIL=… DEMO_ADMIN_PASSWORD=… DEMO
   PRODUCT_UUID=<uuid of praline-box-16> npm run screenshots
 ```
 
-The script saves a placeholder API key as the administrator first, and shows the live API address instead of the stand-in's on the settings page. The stand-in also answers version reports (`POST /report`, 202), so screenshots never report to the live Commando Center.
+The script saves a placeholder API key as the administrator first, shows the live API address instead of the stand-in's on the settings page and a fixed time in the key check message, so the images only change when the UI does. The stand-in also answers version reports (`POST /report`, 202), so screenshots never report to the live Commando Center. The E2E workflow (see *End-to-end tests*) runs the script against a fresh demo and opens a pull request when the images changed.
 
 ## Demo movie
 

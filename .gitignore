@@ -5,6 +5,10 @@
 /demo/project/node_modules/
 /demo/project/public/
 /tests/docs/node_modules/
+/tests/docs/stand-in.log
+/tests/e2e/node_modules/
+/tests/e2e/artifacts/
+/e2e-debug/
 /.phpunit.cache
 /.phpunit.result.cache
 .env
