@@ -4,6 +4,10 @@ All notable changes to Supertext Translation for Akeneo PIM.
 
 ## Unreleased
 
+## 1.0.0 — 2026-11-09
+
+First stable release. Every plugin release is now tested end to end against the live Supertext API (`.github/workflows/e2e.yml`).
+
 ### Added
 - **Translation review** on/off per locale (System → Supertext → Languages, a checkbox next to the locale's *Supertext language*, off by default): translations into a locale with *Translation review* ticked go through Supertext's review service (Supertext Localization Review), where customers and Supertext linguists correct them on the website with a Chrome extension; corrections come back into Akeneo with the next translation (with *Overwrite existing translations*), and texts translated before keep their (reviewed) wording. Same API key, billing, languages and messages; other locales keep going directly to Supertext. New environment variable `SUPERTEXT_REVIEW_URL` (defaults to Supertext's review service; set but empty turns review off for every locale). Existing installations start with review off. All four interface languages.
 - Requests to Supertext name the bundle and its version in the User-Agent (`Akeneo-Supertext-Translation/<version>`, was `Akeneo-Supertext/<version>`).
