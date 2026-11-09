@@ -35,7 +35,7 @@ Where the CMS doesn't show the plugin's version itself, the plugin's own setting
 
 Every plugin repo's `README.md` ends with the same list of all Supertext plugins, between the `<!-- supertext-plugins:start -->` and `<!-- supertext-plugins:end -->` markers (just before *License* if there is one). It has two tables, **Content management systems (CMS)** and **Product information management (PIM)**, sorted alphabetically. Each row has the system, the link, one sentence on the **type of integration** (plugin, extension, module, bundle, package, connector service, …, and how it's installed or hooked in) and what it does. Plugins still being built are listed with *In development*; replace that with the real description when the plugin works.
 
-When a plugin is added, renamed or its description changes, update the list here **and** in every repo: all `*-Supertext-Translation` repos, `wordpress-polylang` and `supertext-aem-connector`. A new plugin adds its own row and gets the list in its README from the start (as of October 2026 the Magnolia and Pimcore repos don't have it yet: add it when their README is written). Drupal's module lives on drupal.org (maintained by MD Systems), so it is listed but doesn't carry the list.
+When a plugin is added, renamed or its description changes, update the list here **and** in every repo: all `*-Supertext-Translation` repos (WordPress: `Wordpress-Polylang-Supertext-Translation`) and `supertext-aem-connector`. A new plugin adds its own row and gets the list in its README from the start (as of October 2026 the Magnolia and Pimcore repos don't have it yet: add it when their README is written). Drupal's module lives on drupal.org (maintained by MD Systems), so it is listed but doesn't carry the list.
 
 Current block (copy exactly, between the markers):
 
@@ -66,7 +66,7 @@ Supertext offers AI and professional translation plugins for these systems:
 | TYPO3 | [Typo3-Supertext-Translation](https://github.com/Supertext/Typo3-Supertext-Translation) | TYPO3 extension (Composer) that hooks into TYPO3's own localization; no new UI. | Translates pages and content elements as editors localize them |
 | Umbraco | [Umbraco-Supertext-Translation](https://github.com/Supertext/Umbraco-Supertext-Translation) | Umbraco package (NuGet) with a backoffice extension. | *Translate with Supertext* for pages, block lists and grids included |
 | Wagtail | [Wagtail-Supertext-Translation](https://github.com/Supertext/Wagtail-Supertext-Translation) | Python package: a machine translator for wagtail-localize. | Translates pages and snippets inside wagtail-localize's editor |
-| WordPress (Polylang) | [wordpress-polylang](https://github.com/supertext/wordpress-polylang) | WordPress plugin: a machine-translation service for Polylang Pro, plus professional translation orders. | AI translation next to DeepL in Polylang, and human translation orders |
+| WordPress (Polylang) | [Wordpress-Polylang-Supertext-Translation](https://github.com/Supertext/Wordpress-Polylang-Supertext-Translation) | WordPress plugin: a machine-translation service for Polylang Pro, plus professional translation orders. | AI translation next to DeepL in Polylang, and human translation orders |
 
 ### Product information management (PIM)
 
