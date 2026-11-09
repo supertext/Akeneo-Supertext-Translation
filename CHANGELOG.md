@@ -4,6 +4,10 @@ All notable changes to Supertext Translation for Akeneo PIM.
 
 ## Unreleased
 
+### Changed
+
+- Node.js 22 for Akeneo's front-end build (installation guide and demo); Node.js 18, which Akeneo's own setup still names, reached end of life in April 2025. Akeneo 2026.5's front end builds unchanged with Node.js 22.
+
 ## 1.0.0 — 2026-11-09
 
 First stable release. Every plugin release is now tested end to end against the live Supertext API (`.github/workflows/e2e.yml`).

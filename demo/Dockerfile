@@ -20,9 +20,9 @@ ENV COMPOSER_ALLOW_SUPERUSER=1 APP_ENV=prod APP_DEBUG=0
 
 # --- Akeneo PIM (Composer) and its front-end packages (Yarn) --------------------------------
 FROM php AS akeneo
-COPY --from=mirror.gcr.io/library/node:18-bookworm /usr/local/bin/node /usr/local/bin/node
-COPY --from=mirror.gcr.io/library/node:18-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
-COPY --from=mirror.gcr.io/library/node:18-bookworm /opt/ /opt/
+COPY --from=mirror.gcr.io/library/node:22-bookworm /usr/local/bin/node /usr/local/bin/node
+COPY --from=mirror.gcr.io/library/node:22-bookworm /usr/local/lib/node_modules /usr/local/lib/node_modules
+COPY --from=mirror.gcr.io/library/node:22-bookworm /opt/ /opt/
 RUN ln -s /opt/yarn-*/bin/yarn /usr/local/bin/yarn && ln -s /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm
 WORKDIR /srv/pim
 COPY demo/project/composer.json /srv/pim/composer.json
