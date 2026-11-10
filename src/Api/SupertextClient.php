@@ -17,7 +17,7 @@ use Supertext\Sdk\V1\SupertextException as SdkException;
 
 /**
  * The bundle's access to Supertext: a thin layer over the Supertext SDK for PHP
- * (lib/supertext-sdk, https://github.com/Supertext/Supertext-API-SDK-and-Guide), which does the
+ * (lib/supertext-sdk, https://github.com/Supertext/Supertext-API-SDK-Guide), which does the
  * protocol (upload, polling, download, delete), HTML packing and the HTTP 429 retries. Language
  * codes are resolved before (Settings::languageCode(), the SDK's Languages): this class sends
  * them as they are. This class adds the bundle's environments and turns SDK errors into the bundle's

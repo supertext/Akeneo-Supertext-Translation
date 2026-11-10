@@ -8,7 +8,7 @@ A Symfony bundle for Akeneo PIM Community Edition 2026 (Symfony 5.4, PHP 8.3). C
 
 | Path | Purpose |
 | --- | --- |
-| `lib/supertext-sdk/` | The [Supertext SDK for PHP](https://github.com/Supertext/Supertext-API-SDK-and-Guide/tree/main/sdk/php), copied (see *Supertext SDK*): the API protocol (upload, polling, download, delete), packing values into HTML documents, Supertext's language list (`Languages`), HTTP 429 retries, curl transport, the API key check (`Client::checkApiKey()`). Namespace `Supertext\Sdk\V1` (API v1; `Supertext\Sdk\Http` for the transport). |
+| `lib/supertext-sdk/` | The [Supertext SDK for PHP](https://github.com/Supertext/Supertext-API-SDK-Guide/tree/main/sdk/php), copied (see *Supertext SDK*): the API protocol (upload, polling, download, delete), packing values into HTML documents, Supertext's language list (`Languages`), HTTP 429 retries, curl transport, the API key check (`Client::checkApiKey()`). Namespace `Supertext\Sdk\V1` (API v1; `Supertext\Sdk\Http` for the transport). |
 | `lib/supertext-plugin-health/` | [Supertext Plugin Health](https://github.com/Supertext/Commando-Center-Supertext-Translation/tree/main/plugin-health) for PHP, copied (see *Supertext Plugin Health*): the Commando Center reporter (`InstallationReporter`, `ReporterState`, `KeyCheck`, the ping answer). Namespace `Supertext\PluginHealth`. |
 | `src/Api/SupertextClient.php` | The bundle's layer over the SDK: environments (Live, Staging, Testing, custom), key normalization, `translateTexts()` and `validateApiKey()`; `forReview()` for locales with *Translation review*. No Akeneo classes. |
 | `src/Api/SupertextException.php` | Errors with the UI key (`supertext_translation.error.<key>`); `fromSdk()` maps the SDK's error codes to the keys. |
@@ -69,7 +69,7 @@ Auth header: `Authorization: Supertext-Auth-Key <key>`. The header name must be 
 
 **Rate limit:** the API limits requests per second per key (HTTP 429). The SDK retries a 429 up to 4 times, waiting for `Retry-After` if sent, otherwise 1, 2, 4 and 8 seconds plus jitter. Target locales are translated one after the other.
 
-The protocol, the HTML packing (one `<div data-st-id="N">` per value: plain text escaped with line breaks as `<br>`, rich text as is; documents below 900,000 characters) and the error codes are the SDK's; see its [integration guide](https://github.com/Supertext/Supertext-API-SDK-and-Guide/blob/main/docs/integration-guide.md).
+The protocol, the HTML packing (one `<div data-st-id="N">` per value: plain text escaped with line breaks as `<br>`, rich text as is; documents below 900,000 characters) and the error codes are the SDK's; see its [integration guide](https://github.com/Supertext/Supertext-API-SDK-Guide/blob/main/docs/integration-guide.md).
 
 Locale codes: see *Language codes*.
 
@@ -160,7 +160,7 @@ AKENEO_URL=http://127.0.0.1:8081 DATABASE_URL=mysql://root:root@127.0.0.1:3306/a
 
 ## Supertext SDK
 
-The bundle uses the [Supertext SDK for PHP](https://github.com/Supertext/Supertext-API-SDK-and-Guide/tree/main/sdk/php) for everything that talks to Supertext. The SDK isn't on Packagist yet, so `lib/supertext-sdk/` holds a copy of its `sdk/php/src` and `autoload.php` (namespace `Supertext\Sdk`, unchanged), mapped in the bundle's `composer.json` (`autoload.psr-4`). `lib/supertext-sdk/COMMIT` records the SDK commit, `VERSION` its version (0.5.0), `README.md` says where it comes from.
+The bundle uses the [Supertext SDK for PHP](https://github.com/Supertext/Supertext-API-SDK-Guide/tree/main/sdk/php) for everything that talks to Supertext. The SDK isn't on Packagist yet, so `lib/supertext-sdk/` holds a copy of its `sdk/php/src` and `autoload.php` (namespace `Supertext\Sdk`, unchanged), mapped in the bundle's `composer.json` (`autoload.psr-4`). `lib/supertext-sdk/COMMIT` records the SDK commit, `VERSION` its version (0.5.0), `README.md` says where it comes from.
 
 - **Never edit `lib/supertext-sdk/` by hand.** Fix the SDK repository (all five SDKs, see its `CLAUDE.md`), then update the copy: `scripts/vendor-sdk.sh [commit-or-branch]` (default `main`; `SDK_DIR=/path/to/clone scripts/vendor-sdk.sh` uses a local clone as it is). It replaces the folder entirely. Run the tests and commit `lib/` together with any bundle changes.
 - CI checks that the copy matches the recorded commit (it runs `scripts/vendor-sdk.sh` with the commit in `COMMIT` and fails if `lib/supertext-sdk/` changes).
