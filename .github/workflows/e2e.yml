@@ -53,7 +53,7 @@ jobs:
           --health-interval=5s --health-timeout=5s --health-retries=20
       # Elasticsearch for the live demo (9200) and for the docs demo (9201).
       elasticsearch-live:
-        image: docker.elastic.co/elasticsearch/elasticsearch:8.17.10
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.19.25
         env:
           discovery.type: single-node
           xpack.security.enabled: 'false'
@@ -64,7 +64,7 @@ jobs:
           --health-cmd "curl -sf http://localhost:9200/_cluster/health"
           --health-interval 10s --health-timeout 5s --health-retries 30
       elasticsearch-docs:
-        image: docker.elastic.co/elasticsearch/elasticsearch:8.17.10
+        image: docker.elastic.co/elasticsearch/elasticsearch:8.19.25
         env:
           discovery.type: single-node
           xpack.security.enabled: 'false'

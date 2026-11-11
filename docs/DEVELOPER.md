@@ -135,7 +135,7 @@ find src tests demo/project/supertext-demo -name '*.php' -print0 | xargs -0 -n1 
 
 The unit tests need only PHPUnit 12 (no Akeneo install). `tests/unit/SettingsTest.php` covers the language mapping (exact match, SDK defaults, no guessing without a default, mapping for target and source, politeness only where offered, saving and validation, localized target names) and the reporting setting, *Translation review* per locale and `SUPERTEXT_REVIEW_URL`; `tests/unit/ReportingTest.php` the reporter glue with a fake transport for Supertext and the center (when each action reports, failures and the one-hour backoff, reports off, state without the key, state stored by the SDK 0.2 reporter, ping answers); `tests/unit/FileExportImportTest.php` the export/import glue with a fake store (reference round trip, the translator's keys and the language mapping in the jobs, other plugin / unknown reference / missing locale / no permission, `ok` written, `source_changed` only with the option, existing values kept unless overwriting, untranslated / invalid / missing not written, files over 10 MB refused); `tests/unit/SupertextClientTest.php` the bundle's client over the SDK (environments, key prefix, error keys, Translation review); `tests/Support/MemoryStorage.php` replaces the database. `tests/demo-check.sh` is the end-to-end test: it starts the demo image twice against MySQL and Elasticsearch with the stand-in API, checks the demo accounts (created once, passwords never logged), translates the sample product and product model with `supertext:translate`, checking the stored values, calls the public ping route and checks that the stand-in's fake Commando Center received an `installed` and a `check` report (`SUPERTEXT_REPORT_URL=http://127.0.0.1:8765/report`), without the API key.
 
-**CI** (`.github/workflows/ci.yml`): lint and unit tests on every push; the `phpstan` job runs PHPStan (see *Code quality and security checks*); the `demo` job builds the demo image (about 20 minutes: Composer, Yarn and Akeneo's webpack build) and runs `tests/demo-check.sh` against MySQL 8.4 and Elasticsearch 8.17 service containers. `.github/workflows/checks.yml` and `links.yml` lint the workflows and check the links. `.github/workflows/e2e.yml` runs the end-to-end test against the real Supertext API and regenerates the docs screenshots (see *End-to-end tests*).
+**CI** (`.github/workflows/ci.yml`): lint and unit tests on every push; the `phpstan` job runs PHPStan (see *Code quality and security checks*); the `demo` job builds the demo image (about 20 minutes: Composer, Yarn and Akeneo's webpack build) and runs `tests/demo-check.sh` against MySQL 8.4 and Elasticsearch 8.19 service containers. `.github/workflows/checks.yml` and `links.yml` lint the workflows and check the links. `.github/workflows/e2e.yml` runs the end-to-end test against the real Supertext API and regenerates the docs screenshots (see *End-to-end tests*).
 
 ## End-to-end tests
 
@@ -212,7 +212,7 @@ It runs in the Railway project `supertext-cms-demos-php`, region EU West (Amster
 | `SUPERTEXT_REPORT_URL` | Tests only: a fake Commando Center, e.g. the stand-in's `http://127.0.0.1:8765/report` |
 | `PORT` | Port Apache listens on (Railway sets it) |
 
-**Elasticsearch service:** image `docker.elastic.co/elasticsearch/elasticsearch:8.17.0` with `discovery.type=single-node`, `xpack.security.enabled=false`, `indices.id_field_data.enabled=true` and `ES_JAVA_OPTS=-Xms512m -Xmx512m`. Without a volume the index is lost on restart; the entrypoint then recreates it and re-indexes the products.
+**Elasticsearch service:** image `docker.elastic.co/elasticsearch/elasticsearch:8.19.25` with `discovery.type=single-node`, `xpack.security.enabled=false`, `indices.id_field_data.enabled=true` and `ES_JAVA_OPTS=-Xms512m -Xmx512m`. Without a volume the index is lost on restart; the entrypoint then recreates it and re-indexes the products.
 
 **Demo accounts:** on every start the setup creates the `DEMO_ADMIN` and `DEMO_EDITOR` accounts if no account with that e-mail address exists. Existing accounts are never changed (change passwords in Akeneo). Log in with the e-mail address (the username is its part before the `@`). Akeneo requires passwords of 8 to 4096 characters; otherwise the account is skipped with a warning naming the variable, and the demo still starts. Passwords are never logged.
 
@@ -224,7 +224,7 @@ It runs in the Railway project `supertext-cms-demos-php`, region EU West (Amster
 docker network create akeneo
 docker run -d --name mysql --network akeneo -e MYSQL_ROOT_PASSWORD=root mysql:8.4
 docker run -d --name elasticsearch --network akeneo -e discovery.type=single-node -e xpack.security.enabled=false \
-  -e indices.id_field_data.enabled=true -e ES_JAVA_OPTS="-Xms512m -Xmx512m" docker.elastic.co/elasticsearch/elasticsearch:8.17.10
+  -e indices.id_field_data.enabled=true -e ES_JAVA_OPTS="-Xms512m -Xmx512m" docker.elastic.co/elasticsearch/elasticsearch:8.19.25
 docker build -f demo/Dockerfile -t supertext-akeneo-demo .
 docker run --rm --name demo --network akeneo -p 8080:8080 \
   -e MYSQL_URL=mysql://root:root@mysql:3306/railway -e APP_INDEX_HOSTS=elasticsearch:9200 -e APP_SECRET=dev \
