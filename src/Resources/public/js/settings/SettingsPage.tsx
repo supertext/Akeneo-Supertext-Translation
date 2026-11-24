@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import styled from 'styled-components';
 import {Breadcrumb, Button, Checkbox, Field, Helper, Link, Locale, SectionTitle, SelectInput, Table, TextInput, getColor} from 'akeneo-design-system';
 import {PageContent, PageHeader, PimView, useRoute} from '@akeneo-pim-community/shared';
-import {ApiError, KeyCheck, LanguageSetting, Links, SettingsData, TargetLanguage, fetchSettings, saveSettings, testConnection} from '../api';
+import {ApiError, KeyCheck, LanguageSetting, Links, SettingsData, TargetLanguage, fetchSettings, localize, saveSettings, sendConfiguration, testConnection} from '../api';
 
 const __ = require('oro/translator');
 
@@ -117,6 +117,14 @@ const SettingsPage = () => {
       .finally(() => setBusy(false));
   };
 
+  const sendConfig = () => {
+    setBusy(true);
+    sendConfiguration()
+      .then(result => setMessage({level: result.ok ? 'success' : 'error', text: localize(result)}))
+      .catch((e: ApiError) => setMessage({level: 'error', text: e.message}))
+      .finally(() => setBusy(false));
+  };
+
   const updateLanguage = (locale: string, change: Partial<LanguageSetting>) =>
     setLanguages(current => current.map(language => (language.locale === locale ? {...language, ...change} : language)));
 
@@ -225,6 +233,12 @@ const SettingsPage = () => {
                   {__('supertext_translation.settings.version_reports_help')}
                   {settings.version_reports_from_environment && ` ${__('supertext_translation.settings.version_reports_environment')}`}
                 </Helper>
+                <div className="supertext-send-config">
+                  <Button level="tertiary" ghost onClick={sendConfig} disabled={busy} className="supertext-send-config-button">
+                    {__('supertext_translation.settings.send_config')}
+                  </Button>
+                  <Helper level="info">{__('supertext_translation.settings.send_config_help')}</Helper>
+                </div>
               </div>
 
               <SectionTitle>

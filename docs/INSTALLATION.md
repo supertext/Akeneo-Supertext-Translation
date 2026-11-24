@@ -179,6 +179,8 @@ A report goes from the Akeneo server (never from the browser) to Supertext's Com
 
 To turn it off, clear the checkbox and save, or set `SUPERTEXT_VERSION_REPORTS=0` on the server (it wins over the checkbox, which is then read-only). Nothing at all is sent then, and the ping endpoint answers 404. The API key check keeps running either way.
 
+**Send configuration to Supertext** (System → Supertext, under the checkbox) sends Supertext, on demand, the extension bundles installed in the PIM (Composer package name and version; Akeneo's own bundles and the framework's are left out) and the Supertext language of each activated locale, so Supertext support can help with a setup question. It sends nothing else, and only while version information is on; the page then says how many extensions and languages were sent.
+
 **Ping endpoint:** `GET <AKENEO_PIM_URL>/supertext/ping?challenge=…` is public (no login, no session, answered before Akeneo's login firewall) and answers only `{"ok":true,"plugin":"Akeneo-Supertext-Translation","challenge":"…"}` with `Cache-Control: no-store`, so Supertext can see that the PIM is reachable from the internet. It returns nothing else: no versions, no settings, no data. If a reverse proxy or firewall in front of Akeneo only lets known paths through, allow `/supertext/ping`.
 
 ## Console commands

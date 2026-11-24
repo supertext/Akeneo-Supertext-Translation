@@ -185,5 +185,9 @@ const saveSettings = (input: object) => request<SettingsData>('supertext_transla
 const testConnection = (input: object) =>
   request<{ok: boolean; message: string; key_check: KeyCheck | null}>('supertext_translation_rest_settings_test', {}, input);
 
-export {ApiError, localize, fetchContext, translate, exportFile, importFile, MAX_UPLOAD_BYTES, fetchSettings, saveSettings, testConnection};
+/** "Send configuration to Supertext": installed bundles and language mapping in one report. */
+const sendConfiguration = () =>
+  request<ServerMessage & {ok: boolean}>('supertext_translation_rest_settings_configuration', {}, {});
+
+export {ApiError, localize, fetchContext, translate, exportFile, importFile, MAX_UPLOAD_BYTES, fetchSettings, saveSettings, testConnection, sendConfiguration};
 export type {EntityType, Context, TargetResult, ImportedJob, SettingsData, LanguageSetting, TargetLanguage, KeyCheck, Links, ServerMessage};

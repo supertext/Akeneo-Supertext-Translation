@@ -23,6 +23,9 @@ supertext_translation:
         forbidden_product_model: You are not allowed to edit this product model.
         entity_not_found: Not found.
         forbidden_settings: You are not allowed to change the system configuration.
+        config_off: Turn on version information to send the configuration.
+        config_sent: 'Sent: {{ extensions }} extensions, {{ languages }} languages.'
+        config_failed: 'The configuration couldn''t be sent. Try again later.'
         no_api_key: No Supertext API key is configured.
         unreachable: The Supertext service could not be reached.
         auth_failed: Authentication failed. Please check the Supertext API key.
@@ -120,6 +123,8 @@ supertext_translation:
         review_help: 'Translation review: translations into a locale with this box ticked go through Supertext''s review service, so reviewers can check and correct them on the website with the Supertext Localization Review extension. Their corrections are used the next time the product is translated.'
         review_off: 'The SUPERTEXT_REVIEW_URL environment variable is empty on this server: Translation review is off for every locale.'
         test: Test connection
+        send_config: Send configuration to Supertext
+        send_config_help: 'Sends Supertext the extension bundles installed in this PIM (name, version) and the Supertext language of each locale, so Supertext support can help better. Nothing else is sent.'
         saved: Settings saved.
         version: "Supertext Translation for Akeneo PIM, version"
         version_unknown: unknown

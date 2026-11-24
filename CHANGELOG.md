@@ -4,12 +4,17 @@ All notable changes to Supertext Translation for Akeneo PIM.
 
 ## Unreleased
 
+### Added
+
+- **Send configuration to Supertext** on System → Supertext: sends Supertext the installed extension bundles (name, version) and the Supertext language of each locale, so Supertext support can help better. Nothing is sent while version information is off. All four interface languages. Supertext Plugin Health 0.4.0.
+
 ### Removed
 
 - Support for Akeneo PIM 2026.3 and 2026.4 (end of life since 28 August and 30 October 2026): the bundle now requires Akeneo PIM 2026.5.
 
 ### Changed
 
+- The screenshots in the guides show real Supertext translations (the E2E workflow takes them with the live API; version reports still go to the stand-in).
 - CI and the demo docs use Elasticsearch 8.19 (8.19.25) instead of 8.17, which reached end of life in August 2025.
 
 - Node.js 22 for Akeneo's front-end build (installation guide and demo); Node.js 18, which Akeneo's own setup still names, reached end of life in April 2025. Akeneo 2026.5's front end builds unchanged with Node.js 22.

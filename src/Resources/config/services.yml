@@ -67,6 +67,7 @@ services:
             - '@oro_security.security_facade'
             - '@pim_user.context.user'
             - '@Supertext\AkeneoTranslationBundle\Reporting\Reporting'
+            - '%kernel.bundles%'
 
     Supertext\AkeneoTranslationBundle\Command\TranslateCommand:
         arguments:

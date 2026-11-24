@@ -1,13 +1,16 @@
 #!/usr/bin/env node
 /**
- * Regenerates docs/images from a freshly set-up demo (no translations yet) whose bundle talks
- * to stand-in.mjs (SUPERTEXT_API_URL=http://127.0.0.1:8765/v1/, no SUPERTEXT_API_KEY).
+ * Regenerates docs/images from a freshly set-up demo (no translations yet). With DOCS_API_KEY (CI: the
+ * secret SUPERTEXT_API_KEY) the bundle translates with the real Supertext API; without it, start the
+ * demo with SUPERTEXT_API_URL=http://127.0.0.1:8765/v1/ (stand-in.mjs). Never SUPERTEXT_API_KEY:
+ * the script saves the key in the settings, as an administrator would.
  * See docs/DEVELOPER.md → Docs screenshots.
  *
  *   BASE_URL (default http://127.0.0.1:8090)
  *   DEMO_ADMIN_EMAIL / DEMO_ADMIN_PASSWORD     settings, channel (administrator)
  *   DEMO_EDITOR_EMAIL / DEMO_EDITOR_PASSWORD   translating (catalog manager)
  *   PRODUCT_UUID                               the uuid of the sample product praline-box-16
+ *   DOCS_API_KEY                               Supertext API key saved in the settings (default: a placeholder for the stand-in)
  */
 import { chromium } from 'playwright'
 
@@ -20,11 +23,12 @@ const browser = await chromium.launch()
 
 async function session(email, password) {
   const context = await browser.newContext({ viewport: { width: 1280, height: 860 }, deviceScaleFactor: 1, locale: 'en-US' })
-  // The settings page shows the API address; show the live API instead of the local stand-in.
+  // The settings page shows the API address; show the live API instead of the local stand-in,
+  // and never the real key's last characters.
   await context.route('**/supertext/rest/settings', async (route) => {
     const response = await route.fetch()
     const body = await response.json()
-    await route.fulfill({ response, json: { ...body, api_url_from_environment: false, effective_url: LIVE_API, environment: 'live' } })
+    await route.fulfill({ response, json: { ...body, api_url_from_environment: false, effective_url: LIVE_API, environment: 'live', api_key_hint: body.api_key_hint ? '…0000' : '' } })
   })
   const page = await context.newPage()
   page.on('pageerror', (e) => console.error('page error:', e.message))
@@ -88,11 +92,11 @@ async function dialogBox(page) {
 {
   const page = await session(need('DEMO_ADMIN_EMAIL'), need('DEMO_ADMIN_PASSWORD'))
 
-  // Save a (stand-in) API key the way an administrator would.
+  // Save the API key the way an administrator would (the real one from DOCS_API_KEY; the stand-in takes any).
   await go(page, '/supertext/settings')
   const form = page.locator('.supertext-settings')
   await form.locator('.supertext-languages').waitFor()
-  await form.locator('input[type=password]').fill('st-demo-key-0000')
+  await form.locator('input[type=password]').fill(process.env.DOCS_API_KEY || 'st-demo-key-0000')
   await page.locator('.supertext-save-button').click()
   await form.getByText('Settings saved.').waitFor()
   await page.waitForTimeout(500)
@@ -137,7 +141,7 @@ async function dialogBox(page) {
   await shot(page, await dialogBox(page), '02-translate-dialog.png', 0)
 
   await page.locator('.supertext-translate-button').click()
-  await page.locator('.supertext-results').waitFor({ timeout: 120_000 })
+  await page.locator('.supertext-results').waitFor({ timeout: 300_000 })
   await page.waitForTimeout(300)
   await shot(page, await dialogBox(page), '03-translated.png', 0)
   await page.locator('.supertext-close-button').click()

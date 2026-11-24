@@ -117,7 +117,10 @@ final class Reporting
      *
      * @param string|null $apiBaseUrl the Supertext API to check the key against (default: the configured one)
      */
-    public function reporter(?string $siteUrl, ?string $apiBaseUrl = null): InstallationReporter
+    /**
+     * @param (callable(): list<array{code: string, supertext: ?string}>)|null $languages the language mapping (sendConfiguration only)
+     */
+    public function reporter(?string $siteUrl, ?string $apiBaseUrl = null, ?callable $languages = null): InstallationReporter
     {
         $version   = $this->pluginVersion ?? Settings::version();
         $version   = $version !== '' ? $version : 'unknown';
@@ -141,6 +144,7 @@ final class Reporting
             reportUrl: $this->settings->reportUrl(),
             transport: $transport !== null ? new ReportTransport($transport) : null,
             now: $this->now,
+            languages: $languages,
         );
     }
 
@@ -183,6 +187,27 @@ final class Reporting
             return $result;
         } catch (\Throwable) {
             return $tested;
+        }
+    }
+
+    /**
+     * "Send configuration to Supertext" on System → Supertext: one `extensions` report with the installed
+     * bundles and the language mapping, sent now (also within the hour after a failed report). Sends nothing
+     * with reports off. Never throws.
+     *
+     * @param list<array{name: string, version?: ?string, active?: ?bool, type?: ?string}> $extensions
+     * @param list<array{code: string, supertext: ?string}>                                $languages
+     */
+    public function sendConfiguration(?string $siteUrl, array $extensions, array $languages): ?ReporterResult
+    {
+        try {
+            $reporter = $this->reporter($siteUrl, null, static fn (): array => $languages);
+            $result   = $reporter->sendExtensions(ReporterState::from($this->settings->reporterState()), $extensions);
+            $this->saveState($result->state);
+
+            return $result;
+        } catch (\Throwable) {
+            return null;
         }
     }
 

@@ -25,6 +25,12 @@ supertext_translation_rest_settings_test:
     methods: [POST]
     options: { expose: true }
 
+supertext_translation_rest_settings_configuration:
+    path: /supertext/rest/settings/configuration
+    defaults: { _controller: 'supertext_translation.controller.settings::sendConfigurationAction', _format: json }
+    methods: [POST]
+    options: { expose: true }
+
 supertext_translation_rest_context:
     path: /supertext/rest/{type}/{id}
     defaults: { _controller: 'supertext_translation.controller.translate::contextAction', _format: json }

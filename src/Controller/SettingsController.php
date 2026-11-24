@@ -13,6 +13,7 @@ namespace Supertext\AkeneoTranslationBundle\Controller;
 use Akeneo\UserManagement\Bundle\Context\UserContext;
 use Oro\Bundle\SecurityBundle\SecurityFacade;
 use Supertext\AkeneoTranslationBundle\Api\SupertextClient;
+use Supertext\AkeneoTranslationBundle\Reporting\InstalledExtensions;
 use Supertext\AkeneoTranslationBundle\Reporting\Reporting;
 use Supertext\AkeneoTranslationBundle\Settings\Settings;
 use Supertext\AkeneoTranslationBundle\Translation\EntityTranslator;
@@ -26,7 +27,8 @@ use Symfony\Component\HttpFoundation\Response;
  * (oro_config_system), like System → Configuration. The API key is never sent back.
  *
  * Commando Center: opening the page runs the reporter's onRequest after the response, saving
- * runs afterSettingsSaved (its key check is shown on the page), Test connection runs testConnection.
+ * runs afterSettingsSaved (its key check is shown on the page), Test connection runs testConnection,
+ * Send configuration to Supertext sends one `extensions` report (bundles and language mapping).
  */
 final class SettingsController
 {
@@ -38,6 +40,8 @@ final class SettingsController
         private readonly SecurityFacade $securityFacade,
         private readonly UserContext $userContext,
         private readonly Reporting $reporting,
+        /** @var array<string, string> kernel.bundles */
+        private readonly array $bundles = [],
     ) {
     }
 
@@ -96,6 +100,34 @@ final class SettingsController
             'key_check' => Reporting::checkToArray($check),
             'message'   => $check !== null ? Reporting::checkMessage($check) : 'The API key could not be checked.',
         ]);
+    }
+
+    /**
+     * "Send configuration to Supertext": the installed bundles (not Akeneo's own) and every activated
+     * locale with its Supertext code, in one report. Nothing is sent with version reports off.
+     */
+    public function sendConfigurationAction(Request $request): JsonResponse
+    {
+        if (!$this->securityFacade->isGranted(self::ACL)) {
+            return new JsonResponse(['message' => 'You are not allowed to change the system configuration.', 'key' => 'forbidden_settings'], Response::HTTP_FORBIDDEN);
+        }
+
+        if (!$this->reporting->enabled()) {
+            return new JsonResponse(['ok' => false, 'key' => 'config_off', 'message' => 'Turn on version information to send the configuration.']);
+        }
+
+        $extensions = InstalledExtensions::from($this->bundles);
+        $languages  = [];
+
+        foreach ($this->translator->activatedLocales() as $locale) {
+            $languages[] = ['code' => $locale, 'supertext' => $this->settings->languageCodeOrNull($locale)];
+        }
+
+        $result = $this->reporting->sendConfiguration(self::siteUrl($request), $extensions, $languages);
+
+        return $result !== null && $result->sent
+            ? new JsonResponse(['ok' => true, 'key' => 'config_sent', 'params' => ['extensions' => \count($extensions), 'languages' => \count($languages)], 'message' => sprintf('Sent: %d extensions, %d languages.', \count($extensions), \count($languages))])
+            : new JsonResponse(['ok' => false, 'key' => 'config_failed', 'message' => "The configuration couldn't be sent. Try again later."]);
     }
 
     /** The site's base URL: AKENEO_PIM_URL, else scheme, host and base path of the request. */

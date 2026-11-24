@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Supertext\AkeneoTranslationBundle\Tests\Unit;
 
 use PHPUnit\Framework\TestCase;
+use Supertext\AkeneoTranslationBundle\Reporting\InstalledExtensions;
 use Supertext\AkeneoTranslationBundle\Reporting\Reporting;
 use Supertext\AkeneoTranslationBundle\Settings\Settings;
 use Supertext\AkeneoTranslationBundle\Tests\Support\MemoryStorage;
@@ -139,7 +140,8 @@ final class ReportingTest extends TestCase
 
         self::assertSame('settings_saved', $reporting->run(Reporting::AFTER_SETTINGS_SAVED, self::SITE)?->event);
         self::assertSame(
-            ['reportedVersions', 'reportedKeyStatus', 'lastFailureAt', 'keyCheck'],
+            // Plugin Health 0.2+ adds keyChecks and reportedKeyStatuses (null with one key).
+            ['reportedVersions', 'reportedKeyStatus', 'lastFailureAt', 'keyCheck', 'keyChecks', 'reportedKeyStatuses'],
             array_keys(json_decode((string) $storage->reporterState, true, 16, JSON_THROW_ON_ERROR)),
             'same stored format',
         );
@@ -250,6 +252,56 @@ final class ReportingTest extends TestCase
         self::assertNull($reporting->run(Reporting::ON_REQUEST, self::SITE)?->event);
         $this->time += 3601;
         self::assertSame('installed', $reporting->run(Reporting::ON_REQUEST, self::SITE)?->event);
+    }
+
+    public function testSendConfigurationSendsBundlesAndTheLanguageMappingNow(): void
+    {
+        $storage   = new MemoryStorage(['api_key' => 'key-a']);
+        $reporting = $this->reporting($storage);
+
+        // Within the hour after a failed report: still sent, the person asked for it.
+        $this->centerStatus = 503;
+        $reporting->run(Reporting::AFTER_SETTINGS_SAVED, self::SITE);
+        $this->centerStatus = 202;
+        $this->requests->exchangeArray([]);
+
+        $result = $reporting->sendConfiguration(
+            self::SITE,
+            [['name' => 'acme/akeneo-connector', 'version' => '2.1.0', 'active' => true, 'type' => 'bundle']],
+            [['code' => 'en_US', 'supertext' => 'en-US'], ['code' => 'de_CH', 'supertext' => 'de-CH'], ['code' => 'en_IE', 'supertext' => null]],
+        );
+
+        self::assertSame('extensions', $result?->event);
+        self::assertTrue($result->sent);
+        [$report] = $this->reports();
+        self::assertSame('extensions', $report['event']);
+        self::assertSame([['name' => 'acme/akeneo-connector', 'version' => '2.1.0', 'active' => true, 'type' => 'bundle']], $report['extensions']);
+        self::assertSame([['code' => 'en_US', 'supertext' => 'en-US'], ['code' => 'de_CH', 'supertext' => 'de-CH'], ['code' => 'en_IE', 'supertext' => null]], $report['languages']);
+    }
+
+    public function testSendConfigurationSendsNothingWithReportsOff(): void
+    {
+        $reporting = $this->reporting(new MemoryStorage(['api_key' => 'key-a', 'version_reports' => false]));
+
+        self::assertFalse((bool) $reporting->sendConfiguration(self::SITE, [['name' => 'acme/x']], [['code' => 'de_CH', 'supertext' => 'de-CH']])?->sent);
+        self::assertSame([], $this->reports());
+    }
+
+    public function testInstalledExtensionsLeaveOutAkeneoAndTheFramework(): void
+    {
+        $bundles = [
+            'FrameworkBundle'            => 'Symfony\\Bundle\\FrameworkBundle\\FrameworkBundle',
+            'PimEnrichBundle'            => 'Akeneo\\Pim\\Enrichment\\Bundle\\AkeneoPimEnrichmentBundle',
+            'OroSecurityBundle'          => 'Oro\\Bundle\\SecurityBundle\\OroSecurityBundle',
+            'SupertextTranslationBundle' => 'Supertext\\AkeneoTranslationBundle\\SupertextTranslationBundle',
+            'AcmeBundle'                 => 'Acme\\Bundle\\AcmeBundle',
+        ];
+        $packages = ['Supertext\\AkeneoTranslationBundle\\SupertextTranslationBundle' => ['name' => 'supertext/akeneo-supertext-translation', 'version' => '1.2.0']];
+
+        self::assertSame([
+            ['name' => 'AcmeBundle', 'version' => null, 'active' => true, 'type' => 'bundle'],
+            ['name' => 'supertext/akeneo-supertext-translation', 'version' => '1.2.0', 'active' => true, 'type' => 'bundle'],
+        ], InstalledExtensions::from($bundles, static fn (string $class): ?array => $packages[$class] ?? null));
     }
 
     public function testCheckCommandSendsACheckReport(): void
