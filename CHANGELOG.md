@@ -15,7 +15,7 @@ All notable changes to Supertext Translation for Akeneo PIM.
 ### Changed
 
 - The screenshots in the guides show real Supertext translations (the E2E workflow takes them with the live API; version reports still go to the stand-in).
-- CI and the demo docs use Elasticsearch 8.19 (8.19.25) instead of 8.17, which reached end of life in August 2025.
+- CI and the demo docs use Elasticsearch 8.19 (8.19.26) instead of 8.17, which reached end of life in August 2025.
 
 - Node.js 22 for Akeneo's front-end build (installation guide and demo); Node.js 18, which Akeneo's own setup still names, reached end of life in April 2025. Akeneo 2026.5's front end builds unchanged with Node.js 22.
 

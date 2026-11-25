@@ -213,7 +213,7 @@ It runs in the Railway project `supertext-cms-demos-php`, region EU West (Amster
 | `SUPERTEXT_REPORT_URL` | Tests only: a fake Commando Center, e.g. the stand-in's `http://127.0.0.1:8765/report` |
 | `PORT` | Port Apache listens on (Railway sets it) |
 
-**Elasticsearch service:** image `docker.elastic.co/elasticsearch/elasticsearch:8.19.25` with `discovery.type=single-node`, `xpack.security.enabled=false`, `indices.id_field_data.enabled=true` and `ES_JAVA_OPTS=-Xms512m -Xmx512m`. Without a volume the index is lost on restart; the entrypoint then recreates it and re-indexes the products.
+**Elasticsearch service:** image `docker.elastic.co/elasticsearch/elasticsearch:8.19.26` with `discovery.type=single-node`, `xpack.security.enabled=false`, `indices.id_field_data.enabled=true` and `ES_JAVA_OPTS=-Xms512m -Xmx512m`. Without a volume the index is lost on restart; the entrypoint then recreates it and re-indexes the products.
 
 **Demo accounts:** on every start the setup creates the `DEMO_ADMIN` and `DEMO_EDITOR` accounts if no account with that e-mail address exists. Existing accounts are never changed (change passwords in Akeneo). Log in with the e-mail address (the username is its part before the `@`). Akeneo requires passwords of 8 to 4096 characters; otherwise the account is skipped with a warning naming the variable, and the demo still starts. Passwords are never logged.
 
@@ -225,7 +225,7 @@ It runs in the Railway project `supertext-cms-demos-php`, region EU West (Amster
 docker network create akeneo
 docker run -d --name mysql --network akeneo -e MYSQL_ROOT_PASSWORD=root mysql:8.4
 docker run -d --name elasticsearch --network akeneo -e discovery.type=single-node -e xpack.security.enabled=false \
-  -e indices.id_field_data.enabled=true -e ES_JAVA_OPTS="-Xms512m -Xmx512m" docker.elastic.co/elasticsearch/elasticsearch:8.19.25
+  -e indices.id_field_data.enabled=true -e ES_JAVA_OPTS="-Xms512m -Xmx512m" docker.elastic.co/elasticsearch/elasticsearch:8.19.26
 docker build -f demo/Dockerfile -t supertext-akeneo-demo .
 docker run --rm --name demo --network akeneo -p 8080:8080 \
   -e MYSQL_URL=mysql://root:root@mysql:3306/railway -e APP_INDEX_HOSTS=elasticsearch:9200 -e APP_SECRET=dev \

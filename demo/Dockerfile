@@ -8,7 +8,7 @@
 
 # --- PHP 8.3 with Akeneo's extensions ------------------------------------------------------
 FROM mirror.gcr.io/library/php:8.3-apache AS php
-ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/download/2.13.2/install-php-extensions /usr/local/bin/
+ADD --chmod=0755 https://github.com/mlocati/docker-php-extension-installer/releases/download/2.13.4/install-php-extensions /usr/local/bin/
 RUN install-php-extensions apcu bcmath exif gd imagick intl opcache pdo_mysql zip \
  && apt-get update && apt-get install -y --no-install-recommends unzip \
  && rm -rf /var/lib/apt/lists/* \
