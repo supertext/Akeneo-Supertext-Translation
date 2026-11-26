@@ -4,6 +4,8 @@ All notable changes to Supertext Translation for Akeneo PIM.
 
 ## Unreleased
 
+## 1.1.0 — 2026-11-26
+
 ### Added
 
 - Indonesian, Romanian, Thai and Vietnamese (`id`, `ro`, `th`, `vi`) can be chosen as Supertext languages, all with formal and informal address (Supertext SDK 0.7.0).
