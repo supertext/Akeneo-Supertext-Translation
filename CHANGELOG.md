@@ -6,6 +6,7 @@ All notable changes to Supertext Translation for Akeneo PIM.
 
 ### Added
 
+- Indonesian, Romanian, Thai and Vietnamese (`id`, `ro`, `th`, `vi`) can be chosen as Supertext languages, all with formal and informal address (Supertext SDK 0.7.0).
 - **Send configuration to Supertext** on System → Supertext: sends Supertext the installed extension bundles (name, version) and the Supertext language of each locale, so Supertext support can help better. Nothing is sent while version information is off. All four interface languages. Supertext Plugin Health 0.4.0.
 
 ### Removed

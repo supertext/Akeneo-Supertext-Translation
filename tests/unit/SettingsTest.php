@@ -166,7 +166,7 @@ final class SettingsTest extends TestCase
         $options = Settings::targetOptions('de_DE');
         $byCode  = array_column($options, 'name', 'code');
 
-        self::assertCount(37, $options);
+        self::assertCount(41, $options);
         self::assertSame('Deutsch (Schweiz)', $byCode['de-CH']);
         self::assertSame('Schweizerdeutsch (Zürich)', $byCode['gsw-u-sd-chzh']);
         self::assertSame('English (United States)', array_column(Settings::targetOptions('en_US'), 'name', 'code')['en-US']);
