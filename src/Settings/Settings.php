@@ -362,7 +362,8 @@ final class Settings
         if (\array_key_exists('api_url', $input)) {
             $url = trim((string) $input['api_url']);
 
-            if ($url !== '' && !preg_match('#^https?://[^\s]+$#i', $url)) {
+            // https only (the API key travels with every request); http only to this machine, for a local stand-in.
+            if ($url !== '' && !preg_match('#^(https://[^\s]+|http://(localhost|127\.0\.0\.1|\[::1\])(:\d+)?(/[^\s]*)?)$#i', $url)) {
                 $errors[] = ['key' => 'invalid_url', 'params' => [], 'message' => 'The API address must start with https://.'];
             }
 

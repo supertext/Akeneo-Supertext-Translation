@@ -58,6 +58,10 @@ final class SettingsController
 
     public function saveAction(Request $request): JsonResponse
     {
+        if (!$request->isXmlHttpRequest()) {
+            return self::notXhr();
+        }
+
         if (!$this->securityFacade->isGranted(self::ACL)) {
             return new JsonResponse(['message' => 'You are not allowed to change the system configuration.', 'key' => 'forbidden_settings'], Response::HTTP_FORBIDDEN);
         }
@@ -78,6 +82,10 @@ final class SettingsController
     /** Cost-free check of the key (the one typed in the form, else the saved one). */
     public function testAction(Request $request): JsonResponse
     {
+        if (!$request->isXmlHttpRequest()) {
+            return self::notXhr();
+        }
+
         if (!$this->securityFacade->isGranted(self::ACL)) {
             return new JsonResponse(['message' => 'You are not allowed to change the system configuration.', 'key' => 'forbidden_settings'], Response::HTTP_FORBIDDEN);
         }
@@ -108,6 +116,10 @@ final class SettingsController
      */
     public function sendConfigurationAction(Request $request): JsonResponse
     {
+        if (!$request->isXmlHttpRequest()) {
+            return self::notXhr();
+        }
+
         if (!$this->securityFacade->isGranted(self::ACL)) {
             return new JsonResponse(['message' => 'You are not allowed to change the system configuration.', 'key' => 'forbidden_settings'], Response::HTTP_FORBIDDEN);
         }
@@ -128,6 +140,15 @@ final class SettingsController
         return $result !== null && $result->sent
             ? new JsonResponse(['ok' => true, 'key' => 'config_sent', 'params' => ['extensions' => \count($extensions), 'languages' => \count($languages)], 'message' => sprintf('Sent: %d extensions, %d languages.', \count($extensions), \count($languages))])
             : new JsonResponse(['ok' => false, 'key' => 'config_failed', 'message' => "The configuration couldn't be sent. Try again later."]);
+    }
+
+    /**
+     * Akeneo's own internal API refuses requests without X-Requested-With (a header other sites
+     * can't send without CORS), which protects these POSTs against cross-site requests.
+     */
+    public static function notXhr(): JsonResponse
+    {
+        return new JsonResponse(['message' => 'This request must come from the Akeneo interface. Reload the page and try again.', 'key' => 'bad_request'], Response::HTTP_BAD_REQUEST);
     }
 
     /** The site's base URL: AKENEO_PIM_URL, else scheme, host and base path of the request. */

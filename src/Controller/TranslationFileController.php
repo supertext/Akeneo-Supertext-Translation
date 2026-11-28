@@ -35,6 +35,10 @@ final class TranslationFileController
     /** POST {"from": "en_US", "to": ["de_DE"], "format": "xliff"|"html"} → the file as a download. */
     public function exportAction(Request $request, string $type, string $id): Response
     {
+        if (!$request->isXmlHttpRequest()) {
+            return SettingsController::notXhr();
+        }
+
         $input   = json_decode($request->getContent(), true);
         $input   = \is_array($input) ? $input : [];
         $targets = \is_array($input['to'] ?? null) ? array_values(array_map('strval', $input['to'])) : [];
@@ -54,6 +58,10 @@ final class TranslationFileController
     /** POST multipart: file, include_changed (0/1), overwrite (0/1) → {"jobs": [...]} (see TranslationFileGlue::import()). */
     public function importAction(Request $request): JsonResponse
     {
+        if (!$request->isXmlHttpRequest()) {
+            return SettingsController::notXhr();
+        }
+
         $file = $request->files->get('file');
 
         if (!$file instanceof UploadedFile) {

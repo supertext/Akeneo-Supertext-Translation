@@ -88,6 +88,20 @@ final class SettingsTest extends TestCase
         self::assertSame('', $settings->politeness('en_US'));
     }
 
+    public function testCustomApiAddressMustUseHttps(): void
+    {
+        $settings = new Settings(new MemoryStorage());
+
+        self::assertSame([], $settings->update(['environment' => 'custom', 'api_url' => 'https://api.example.com/v1/']));
+        self::assertSame([], $settings->update(['environment' => 'custom', 'api_url' => 'http://localhost:4010/v1/']));
+        self::assertSame([], $settings->update(['environment' => 'custom', 'api_url' => 'http://127.0.0.1:4010/v1/']));
+
+        foreach (['http://api.example.com/v1/', 'http://localhost.example.com/v1/', 'ftp://api.example.com/'] as $url) {
+            $errors = $settings->update(['environment' => 'custom', 'api_url' => $url]);
+            self::assertSame('invalid_url', $errors[0]['key'] ?? null, $url);
+        }
+    }
+
     public function testSavingTheMapping(): void
     {
         $storage  = new MemoryStorage(['languages' => ['xx_YY' => ['code' => 'xx-YY']]]);

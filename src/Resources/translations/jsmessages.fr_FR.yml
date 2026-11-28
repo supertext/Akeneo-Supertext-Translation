@@ -23,6 +23,7 @@ supertext_translation:
         forbidden_product_model: Vous n'êtes pas autorisé à modifier ce modèle de produit.
         entity_not_found: Introuvable.
         forbidden_settings: Vous n'êtes pas autorisé à modifier la configuration système.
+        bad_request: Cette requête doit provenir de l'interface Akeneo. Rechargez la page et réessayez.
         config_off: Activez les informations de version pour envoyer la configuration.
         config_sent: 'Envoyé : {{ extensions }} extensions, {{ languages }} langues.'
         config_failed: La configuration n’a pas pu être envoyée. Veuillez réessayer plus tard.

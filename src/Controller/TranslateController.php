@@ -95,6 +95,10 @@ final class TranslateController
     /** POST {"from": "en_US", "to": ["de_DE"], "overwrite": false} */
     public function translateAction(Request $request, string $type, string $id): JsonResponse
     {
+        if (!$request->isXmlHttpRequest()) {
+            return SettingsController::notXhr();
+        }
+
         $entity = $this->entity($type, $id);
 
         if ($entity instanceof JsonResponse) {

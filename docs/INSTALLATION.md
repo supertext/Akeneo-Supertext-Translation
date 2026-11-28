@@ -146,7 +146,7 @@ There is no separate permission for translating: whoever may edit a product's at
 | --- | --- | --- | --- |
 | API key | System → Supertext, or `SUPERTEXT_API_KEY` | none | The variable takes precedence. Stored in `pim_configuration` (code `supertext_translation`). |
 | Supertext API | System → Supertext | Live | *Live* (`https://api.supertext.com/v1/`), *Staging*, *Testing* or *Custom address*. `SUPERTEXT_API_URL` overrides it (for tests against a stand-in). |
-| API address | System → Supertext | none | Only for *Custom address*. |
+| API address | System → Supertext | none | Only for *Custom address*. Must start with `https://` (`http://` only for `localhost` or `127.0.0.1`, e.g. a local stand-in). |
 | Timeout (seconds) | System → Supertext | 180 | How long to wait for one language (30 to 1800). |
 | Send version information to Supertext | System → Supertext, or `SUPERTEXT_VERSION_REPORTS` | on | See *Version information* below. `SUPERTEXT_VERSION_REPORTS=0` (or `false`, `off`, `no`) turns it off, `1` on; the variable takes precedence over the checkbox. |
 | Supertext language | System → Supertext → Languages | the exact match, else the SDK default (`es_ES` → `es`), else none | Per locale, a drop-down with Supertext's list (e.g. `de-CH`, `es`). Locales without one (*— Choose —*) can't be translated. See *Languages*. |

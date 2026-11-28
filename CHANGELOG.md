@@ -4,6 +4,11 @@ All notable changes to Supertext Translation for Akeneo PIM.
 
 ## Unreleased
 
+### Security
+
+- The settings, translate and translation-file actions only accept requests sent by the Akeneo interface (header `X-Requested-With`, as Akeneo's own internal API), so other websites can't trigger them in a signed-in user's browser. New message in all four interface languages.
+- A custom API address must use `https://` (as the settings page already said); `http://` is accepted only for `localhost` and `127.0.0.1`.
+
 ## 1.1.0 — 2026-11-26
 
 ### Added
